@@ -24,6 +24,24 @@ Ninguém acerta o fundo do câmbio. Estratégia: **compra programada (preço mé
 - **Na viagem:** levar um 2º meio de pagamento (outra conta global ou um pouco de espécie)
   para o caso de bloqueio ou perda do cartão
 
+## Comparativo de contas para euro (pesquisa de 07/11/2026)
+| Conta | Custo para converter | IOF | Observação |
+|---|---|---|---|
+| **ARQ** (atual) | ~0,5% (spread de ~0,6% no print do app) | 0%, segundo a empresa (stablecoin) | Reclame Aqui 6,7/10 ("regular"); queixas de bloqueio de saldo e suporte lento; sem FGC |
+| **Revolut** | spread zero até ~R$ 1.000/mês no plano grátis | 0%, segundo o ranking do Melhores Destinos | menor custo total no ranking de 2026 dentro do limite; a parcela quinzenal (~R$ 400–800) cabe |
+| **Wise** | ~0,4–1,2% | 3,5% (1,1% com Rende+, segundo comparativos) | previsível, mais de 40 moedas (libra e franco inclusos) |
+| **C6 Global** | 0,75–0,90% | 3,5% | 2º lugar no ranking para € 1.000 |
+| **Nomad** | 1–2% | 3,5% | única com seguro FDIC (até US$ 250 mil), mais cara no euro |
+| **Inter Global** | ~1–2% | 3,5% | compensa mais para quem já é cliente |
+
+**IOF sobre stablecoin:** desde 02/02/2026 o Banco Central trata stablecoin como câmbio. Em fev/2026 a
+Receita fez uma minuta de IOF de 3,5% (com isenção até R$ 10 mil/mês para pessoa física), mas em
+jul/2026 esclareceu que a operação não gera IOF-câmbio automaticamente. Situação ainda instável → a rotina vigia.
+
+**Estratégia:** ARQ como principal (mais barata hoje) + **uma 2ª conta de reserva** (Revolut ou Wise)
+para não depender de um único app. Não deixar na ARQ mais do que a próxima fase da viagem precisa,
+e enviar documentos/comprovante de renda cedo para evitar bloqueio preventivo.
+
 ## Onde comprar (compare sempre o VET)
 | Meio | Prós | Contras |
 |---|---|---|
