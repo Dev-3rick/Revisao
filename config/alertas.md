@@ -39,7 +39,8 @@ porta de entrada) cujo total estimado até a Itália caia nas faixas 🎯/🟢.
 | Bônus de transferência forte | ≥ 80% (Livelo/Esfera → Smiles/LATAM Pass/Azul) e você tem saldo |
 | Compra de pontos barata | milheiro ≤ R$ 35 em promoção (Livelo ~R$ 35–40 é referência de "bom") |
 | Pontos vencendo | vencimento em ≤ 60 dias |
-| Combo Black Friday | compra Livelo com ≥ 50% de desconto **e** bônus ≥ 80% para Smiles/Azul ativo ao mesmo tempo |
+| **Combo principal** | compra Livelo com ≥ 50% de desconto **e** bônus ≥ 80% Livelo → **Azul** ao mesmo tempo (usuário já tem as duas contas) |
+| Resgate TAP até Veneza | Azul com voo TAP Rio/SP → Lisboa → Veneza em julho/2027 com custo total (pontos × milheiro + taxas) ≤ R$ 3.800 |
 | Milhas grátis | conta nova, conversão de câmbio ou cadastro que dá milhas sem custo extra |
 
 ## Cashback e cartões

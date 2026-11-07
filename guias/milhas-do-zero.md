@@ -24,6 +24,15 @@ Comprar milhas "para guardar" sem resgate em vista é o erro clássico: elas ven
 Em 2026 o bônus de transferência da Livelo/Esfera para o LATAM Pass tem ficado em ~25%.
 Para a Europa, **Smiles** (Air France/KLM, TAP, ITA e parceiras) e **Azul** (TAP) tendem a render mais com os bônus altos.
 
+## O caminho do usuário: Livelo → Azul → TAP até Veneza
+- Já tem conta na **Livelo** e na **Azul Fidelidade**.
+- A Azul emite voos da **TAP** (parceira), que voa Brasil → Lisboa → **Veneza** no mesmo bilhete.
+- A Azul **não tem tabela fixa**: alertas recentes mostraram Europa a partir de ~58.740 e ~76.540 pontos + taxas
+  por trecho (Pontos pra Voar), mas o buscador da Azul já mostrou ~298 mil pontos ida e volta em datas ruins.
+  Vagas da TAP com pontos têm sido escassas → **simular julho/2027 antes de comprar qualquer ponto**.
+- Bônus de transferência Livelo → Azul vem com validade curta (ex.: 6 meses no 130% de nov/2026):
+  transfira **só quando for emitir**.
+
 ## Plano em fases
 | Fase | Quando | Ação |
 |---|---|---|

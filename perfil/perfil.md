@@ -4,6 +4,8 @@
 - Origem: **qualquer cidade do Brasil** — o critério é o MENOR CUSTO TOTAL
   - Mora no Rio (GIG/SDU); testar também GRU/VCP (SP), CNF (BH), BSB, SSA, REC, FOR, NAT, BEL
   - Posicionamento até o aeroporto de saída (voo nacional ou ônibus) entra na conta
+- Destino final: **Veneza** (casa da tia). Aeroportos: **VCE** (Marco Polo) e **TSF** (Treviso, base da Ryanair);
+  alternativas com trem até Veneza: BLQ (Bolonha), BGY/MXP (Milão)
 - Destino: **chegar na Itália** — pode ser voo direto ou por qualquer cidade europeia
   (Lisboa, Madri, Porto, Paris…) + low-cost ou trem até a Itália
 - Estilo: **econômico ao máximo** — hostel, comida barata, sem luxo; foco em andar e conhecer
@@ -19,11 +21,11 @@
 ## Programas de pontos e milhas (saldo atual)
 | Programa | Saldo | Vencimento | Clube assinado? |
 |---|---|---|---|
-| Livelo | 0 | — | não |
+| Livelo | conta aberta · saldo [CONFIRMAR] | — | não |
 | Esfera | 0 | — | não |
 | Smiles | 0 | — | não |
 | LATAM Pass | 0 | — | não |
-| Azul Fidelidade | 0 | — | não |
+| Azul Fidelidade | conta aberta · saldo [CONFIRMAR] | — | não |
 
 Ponto de partida = zero. Estratégia de acúmulo sem cartão: `guias/milhas-do-zero.md`.
 

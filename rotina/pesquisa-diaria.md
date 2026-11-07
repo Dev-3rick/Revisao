@@ -19,7 +19,9 @@ Execute na ordem. Meta: relatório pronto em `relatorios/AAAA-MM-DD.md`.
 ## Passo 2 — Passagens para a Itália
 1. Busca FLEXÍVEL para julho/2027 (14–20 dias), objetivo = menor custo total até a Itália:
    - Origens: GIG, GRU/VCP, CNF, BSB e qualquer cidade brasileira que apareça em promoção (SSA, REC, FOR, NAT, BEL…)
-   - Portas de entrada: Itália direto (FCO, MXP, VCE, BLQ, NAP) **e** Lisboa, Porto, Madri, Barcelona, Paris, Londres
+   - **Destino final: Veneza** (VCE; também TSF/Treviso, e BLQ/BGY/MXP + trem). Portas de entrada: VCE direto
+     **e** Lisboa, Porto, Madri, Barcelona, Paris, Londres + low-cost até VCE/TSF
+   - Prioridade em milhas: **TAP via Lisboa até Veneza com pontos Azul** (bilhete único)
    - Promoções do dia nos sites de alerta (Melhores Destinos, Passagens Imperdíveis), qualquer origem/destino na Europa
    - Para cada candidata, estime: posicionamento nacional (Rio → origem, ida e volta) + low-cost/trem até a Itália + bagagem
 2. Registre as melhores em `historico/rotas.csv` e rode `python3 scripts/rotas.py --dias 7`
