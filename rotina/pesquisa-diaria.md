@@ -12,7 +12,8 @@ Execute na ordem. Meta: relatório pronto em `relatorios/AAAA-MM-DD.md`.
    `python3 scripts/cotacoes.py --alerta` (mensagem curta do euro com a parcela do dia).
 2. Pesquise o **motivo** do movimento (Copom/Fed/BCE, fiscal, exterior) — 1 a 2 fontes.
 3. Às segundas: inclua a mediana do Boletim Focus para o câmbio no fim do ano.
-4. Opcional: cotação efetiva de euro em 1–2 casas/contas globais (VET com IOF).
+4. O usuário compra euro na **ARQ** (conversão ~0,5%, sem IOF segundo a empresa). Verifique notícias
+   sobre a ARQ/DolarApp, IOF sobre stablecoins e regulação de ativos virtuais no Brasil; se algo mudar, 🔔 alerta.
 5. Veredito: aplique as regras de `config/alertas.md` → parcela dobrada / normal / segurar.
 
 ## Passo 2 — Passagens para a Itália

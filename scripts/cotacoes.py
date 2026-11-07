@@ -105,7 +105,7 @@ def plano_euro() -> tuple:
     return total, (sum(e * c for e, c in compras) / total if total else None)
 
 
-def alerta(linhas: dict, meta_eur: float, data_limite: date) -> str:
+def alerta(linhas: dict, meta_eur: float, data_limite: date, spread_arq: float) -> str:
     datas = sorted(linhas)
     eur = [float(linhas[d]["eur_ptax"]) for d in datas if linhas[d].get("eur_ptax")]
     atual, ontem = eur[-1], eur[-2]
@@ -135,7 +135,8 @@ def alerta(linhas: dict, meta_eur: float, data_limite: date) -> str:
         f"R$ {atual:.4f}  ({(atual/ontem-1)*100:+.2f}% vs dia anterior | {(atual/m30-1)*100:+.2f}% vs média 30d)",
         f"Faixa 90d: R$ {lo:.4f} – R$ {hi:.4f} | posição {pos:.0f}%",
         f"{emoji} *{acao}*",
-        f"Parcela base: € {parcela:,.0f} a cada 15 dias → hoje: € {parcela*mult:,.0f} (≈ R$ {parcela*mult*atual:,.0f} PTAX, sem spread/IOF)",
+        f"Na ARQ (estimado, PTAX + {spread_arq:.1f}%): R$ {atual*(1+spread_arq/100):.4f} por €",
+        f"Parcela base: € {parcela:,.0f} a cada 15 dias → hoje: € {parcela*mult:,.0f} (≈ R$ {parcela*mult*atual*(1+spread_arq/100):,.0f} na ARQ)",
         f"Plano: € {comprado:,.0f} de € {meta_eur:,.0f}" + (f" | preço médio R$ {medio:.4f}" if medio else ""),
     ]
     if extra:
@@ -155,6 +156,7 @@ def main() -> int:
     ap.add_argument("--alerta", action="store_true", help="mensagem curta do euro")
     ap.add_argument("--meta-eur", type=float, default=2000, help="total de euros da viagem")
     ap.add_argument("--ate", default="2027-06-15", help="data limite para terminar a compra (AAAA-MM-DD)")
+    ap.add_argument("--spread-arq", type=float, default=0.5, help="custo de conversão da ARQ em %% (informado: 0,5%%)")
     args = ap.parse_args()
 
     fim = date.today()
@@ -179,7 +181,7 @@ def main() -> int:
         print("Sem dados de cotação.", file=sys.stderr)
         return 1
     if args.alerta:
-        print(alerta(linhas, args.meta_eur, date.fromisoformat(args.ate)))
+        print(alerta(linhas, args.meta_eur, date.fromisoformat(args.ate), args.spread_arq))
         return 0
     datas = sorted(linhas)
     print(f"PTAX (venda) - último dia útil: {datas[-1]}  | fonte: Banco Central do Brasil")

@@ -10,7 +10,11 @@
 
 ## Cartões de crédito
 - **Nenhum** (hoje).
-- Conta usada: "ARQ/ARC" — **[CONFIRMAR qual banco/conta é]**
+- Conta usada: **ARQ (antiga DolarApp)** — conta global com saldo em BRL, dólar digital (USDc) e
+  euro digital (EURc), cartão Mastercard final 4723 (débito global; crédito só no plano Prestige)
+  - Saldo em 07/11/2026: R$ 200,00 + US$ 20 em USDs (bônus do Rewards)
+  - Conversão informada: **0,5%**; a ARQ afirma **não cobrar IOF** (gasto sai de ativo virtual)
+  - Print de 07/11: dólar de compra R$ 5,5354 vs. PTAX R$ 5,5013 → spread ≈ 0,6%
 
 ## Programas de pontos e milhas (saldo atual)
 | Programa | Saldo | Vencimento | Clube assinado? |
@@ -25,7 +29,7 @@ Ponto de partida = zero. Estratégia de acúmulo sem cartão: `guias/milhas-do-z
 
 ## Cashback e contas
 - Apps de cashback: nenhum ainda
-- Conta global / multimoeda: nenhuma ainda (necessária para euro, libra e franco — ver `guias/cambio.md`)
+- Conta global / multimoeda: **ARQ** (euro digital para a viagem; ver `guias/cambio.md`)
 
 ## Preferências
 - Escalas: aceita (prioridade é preço)

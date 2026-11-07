@@ -13,6 +13,17 @@ Ninguém acerta o fundo do câmbio. Estratégia: **compra programada (preço mé
    - ≥ 60% → meia parcela (ou pule, sem passar de 2 seguidas)
 4. Registre o preço médio no relatório.
 
+## Conta do usuário: ARQ (antiga DolarApp)
+- **Onde comprar os € 2.000:** converter BRL → EURc na ARQ, parcela por parcela, seguindo o alerta
+- Custo informado de 0,5% de conversão e sem IOF, segundo a própria ARQ e blogs como Pontos pra Voar.
+  Mesmo que o IOF de 3,5% passe a ser cobrado algum dia, o custo continua menor que o do cartão de banco + spread.
+- **Riscos a acompanhar (a rotina verifica):**
+  - O saldo é em ativo virtual (stablecoin), não é depósito bancário e **não tem cobertura do FGC**
+  - A regra tributária e a regulação de ativos virtuais no Brasil podem mudar (IOF, regras do Banco Central)
+  - Libra e franco: o cartão paga convertendo do saldo; conferir no app qual taxa é cobrada
+- **Na viagem:** levar um 2º meio de pagamento (outra conta global ou um pouco de espécie)
+  para o caso de bloqueio ou perda do cartão
+
 ## Onde comprar (compare sempre o VET)
 | Meio | Prós | Contras |
 |---|---|---|
