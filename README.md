@@ -43,7 +43,8 @@ historico/                  ← cotacoes.csv, passagens.csv, promocoes.csv
 relatorios/                 ← um arquivo por dia
 modelos/newsletter-whatsapp.md ← formato oficial da mensagem diária (WhatsApp/notificação)
 modelos/radar-whatsapp.html ← prévia da newsletter com botão "copiar"
-modelos/radar-painel.html   ← painel visual (gerado por scripts/painel.py)
+modelos/radar-painel.html   ← PAINEL DE DECISÃO (gerado por scripts/painel.py)
+modelos/radar-painel.template.html ← layout do painel (o script injeta os dados)
 scripts/cotacoes.py         ← PTAX USD/EUR/GBP/CHF + médias + sinal; --alerta = mensagem do euro
 scripts/milhas.py           ← calculadora: milhas compradas vs. pagar em dinheiro
 scripts/rotas.py            ← ranking de rotas pelo custo total porta a porta até a Itália
@@ -64,3 +65,17 @@ scripts/painel.py           ← gera o painel visual com os dados dos histórico
 
 > Nada aqui é recomendação financeira profissional. O relatório mostra dados, fontes e
 > o raciocínio; a decisão é sua.
+
+## Painel de decisão (Radar Itália)
+```
+python3 scripts/cotacoes.py   # atualiza as cotações oficiais
+python3 scripts/painel.py     # gera modelos/radar-painel.html
+```
+O painel mostra, nesta ordem:
+1. **O que fazer hoje**: euro (DOBRAR / NORMAL / SEGURAR + quantos € comprar), passagem
+   (COMPRAR / MONITORAR) e milhas (ESPERAR / BLACK FRIDAY), com cor verde, amarela ou vermelha
+2. **Câmbio e hora de comprar**: gráfico de euro, dólar, libra e franco (3M/6M/1A) com as zonas de
+   compra, a média de 30 dias e o termômetro da faixa de 90 dias
+3. **Plano de euros**: progresso até € 2.000, preço médio, parcela e simulador de compra na ARQ
+4. **Régua de preço da passagem**: meta R$ 2.500 → média de julho R$ 6.963, com a melhor rota
+5. **Milhas e promoções** (abertas, contexto, encerradas) e **marcos da viagem**
