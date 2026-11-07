@@ -15,13 +15,17 @@ Cada compra é registrada em `perfil/plano-euro.csv` (data,euros,cotacao) e o sc
 a parcela. Alerta do euro **2x por dia útil** (`python3 scripts/cotacoes.py --alerta`).
 
 ## Passagens
-Faixas para **Rio (GIG) → Europa, ida e volta, julho/2027**:
+Faixas para o **CUSTO TOTAL ida e volta até a Itália, julho/2027** (voo nacional de posicionamento +
+internacional + low-cost/trem + bagagem — calculado pelo `scripts/rotas.py`):
 | Faixa | Preço | Ação |
 |---|---|---|
 | 🎯 Meta dos sonhos | ≤ R$ 2.500 | COMPRAR NA HORA (erro tarifário ou promoção rara) |
 | 🟢 Excelente | ≤ R$ 3.800 | COMPRAR |
 | 🟡 Bom | R$ 3.800–4.500 | comprar se faltarem < 5 meses |
 | 🔴 Caro | > R$ 5.500 | ESPERAR (a média de julho a partir do Galeão é ~R$ 6.963, segundo o Kayak) |
+
+Também dispara alerta: **qualquer promoção Brasil → Europa** (de qualquer cidade, para qualquer
+porta de entrada) cujo total estimado até a Itália caia nas faixas 🎯/🟢.
 
 | Gatilho | Regra |
 |---|---|

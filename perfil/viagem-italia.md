@@ -12,7 +12,7 @@ Itália (base) + **França, Inglaterra, Alemanha, Suíça**. Roteiro e orçament
 ## Orçamento e metas
 | Item | Meta | Observação |
 |---|---|---|
-| Passagem ida+volta (dinheiro) | **R$ 2.500 (meta dos sonhos)** | julho a partir do Galeão tem média de ~R$ 6.963 (Kayak); veja as faixas em `config/alertas.md` |
+| Custo total ida+volta **porta a porta até a Itália** | **R$ 2.500 (meta dos sonhos)** | qualquer origem no Brasil + qualquer porta de entrada na Europa; ranking em `python3 scripts/rotas.py` |
 | Passagem com milhas compradas | custo total ≤ R$ 2.500 a 3.000 | caminho mais realista para a meta: milhas compradas em promoção + taxas |
 | Dinheiro para a viagem | **€ 2.000** | cobre o roteiro econômico com folga (estimativa em `roteiro-europa.md`) |
 | Compra dos euros | parcelas quinzenais até **15/06/2027** | controle em `perfil/plano-euro.csv` |

@@ -1,5 +1,27 @@
 # Guia — Passagens Rio → Europa (julho/2027)
 
+## Estratégia de menor preço: origem e destino flexíveis
+O que vale é o **custo total até a Itália**, não o preço do voo transatlântico.
+
+```
+[sua cidade] ─(voo nacional/ônibus)─▶ [aeroporto mais barato no Brasil] ─✈─▶ [porta de entrada mais barata]
+             ─(low-cost/trem)─▶ Itália
+```
+- Portas de entrada costumam ser mais baratas: **Lisboa e Madri** (TAP, Iberia, Air Europa, LATAM, Azul).
+  Em nov/2026 houve SP–Lisboa por R$ 3.342 e SP–Lisboa/Madri no verão de 2027 a partir de R$ 3.609, com mala (Melhores Destinos).
+- Do Nordeste (Recife, Fortaleza, Natal, Salvador) os voos para Lisboa/Madri são mais curtos e às vezes mais baratos;
+  soma o voo nacional Rio→Nordeste e compara.
+- Lisboa/Madri → Itália: Ryanair, easyJet, Vueling, Wizz e ITA, muitas vezes € 30–80 comprando cedo.
+- Como você vai passar por França, Inglaterra, Alemanha e Suíça, a porta de entrada pode virar parte do roteiro
+  (ex.: chegar em Paris ou Londres, terminar na Itália e voltar de lá).
+
+### Riscos de bilhetes separados (autoconexão)
+- Se o voo internacional atrasar e você perder a low-cost, **ninguém reacomoda**: deixe no mínimo
+  6–8 h de intervalo, ou durma uma noite na porta de entrada (vira um dia de passeio).
+- Low-cost cobra a mala à parte: o preço anunciado costuma incluir só uma mochila pequena.
+- No posicionamento nacional (Rio → SP/Nordeste), vá na véspera ou com folga grande.
+- Na volta é a mesma coisa: a low-cost até a porta de entrada no dia anterior ao voo para o Brasil é o mais seguro.
+
 ## Quando comprar
 - Janela típica boa: **3 a 8 meses antes**; promoções relâmpago aparecem a qualquer momento.
 - Alta temporada europeia: **junho–agosto**, Páscoa e fim de ano → mais caro.

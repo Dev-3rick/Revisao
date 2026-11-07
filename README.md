@@ -43,6 +43,7 @@ historico/                  ← cotacoes.csv, passagens.csv, promocoes.csv
 relatorios/                 ← um arquivo por dia
 scripts/cotacoes.py         ← PTAX USD/EUR/GBP/CHF + médias + sinal; --alerta = mensagem do euro
 scripts/milhas.py           ← calculadora: milhas compradas vs. pagar em dinheiro
+scripts/rotas.py            ← ranking de rotas pelo custo total porta a porta até a Itália
 ```
 
 ## Uso
@@ -53,6 +54,7 @@ scripts/milhas.py           ← calculadora: milhas compradas vs. pagar em dinhe
   - Entrega: notificação no app do Claude; o texto já sai no formato do WhatsApp
 - **Manual:** peça ao Claude: _"Rode a pesquisa diária"_.
 - **Só câmbio:** `python3 scripts/cotacoes.py` · **alerta:** `python3 scripts/cotacoes.py --alerta`
+- **Rota mais barata até a Itália:** `python3 scripts/rotas.py`
 - **Milhas valem?** `python3 scripts/milhas.py --dinheiro 5200 --milhas 100000 --taxas 900 --milheiro 17`
 
 > Nada aqui é recomendação financeira profissional. O relatório mostra dados, fontes e

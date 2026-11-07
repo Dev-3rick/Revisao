@@ -1,8 +1,11 @@
 # Perfil
 
 ## Básico
-- Cidade/aeroporto de origem: **Rio de Janeiro (GIG — Galeão)**
-- Alternativas aceitáveis: SDU só para conexão doméstica; GRU (São Paulo) se a soma voo SP + internacional sair mais barata
+- Origem: **qualquer cidade do Brasil** — o critério é o MENOR CUSTO TOTAL
+  - Mora no Rio (GIG/SDU); testar também GRU/VCP (SP), CNF (BH), BSB, SSA, REC, FOR, NAT, BEL
+  - Posicionamento até o aeroporto de saída (voo nacional ou ônibus) entra na conta
+- Destino: **chegar na Itália** — pode ser voo direto ou por qualquer cidade europeia
+  (Lisboa, Madri, Porto, Paris…) + low-cost ou trem até a Itália
 - Estilo: **econômico ao máximo** — hostel, comida barata, sem luxo; foco em andar e conhecer
 
 ## Cartões de crédito

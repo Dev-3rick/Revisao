@@ -16,12 +16,16 @@ Execute na ordem. Meta: relatório pronto em `relatorios/AAAA-MM-DD.md`.
 5. Veredito: aplique as regras de `config/alertas.md` → parcela dobrada / normal / segurar.
 
 ## Passo 2 — Passagens para a Itália
-1. Pesquise GIG → Paris, Lisboa, Madri, Roma, Milão e Londres para julho/2027 (14–20 dias),
-   incluindo open-jaw (chegar em Paris/Londres, voltar da Itália). Use as faixas de `config/alertas.md`.
-2. Registre o menor preço encontrado por rota em `historico/passagens.csv`
-   (`data_pesquisa,origem,destino,ida,volta,preco_brl,cia,escalas,fonte`).
+1. Busca FLEXÍVEL para julho/2027 (14–20 dias), objetivo = menor custo total até a Itália:
+   - Origens: GIG, GRU/VCP, CNF, BSB e qualquer cidade brasileira que apareça em promoção (SSA, REC, FOR, NAT, BEL…)
+   - Portas de entrada: Itália direto (FCO, MXP, VCE, BLQ, NAP) **e** Lisboa, Porto, Madri, Barcelona, Paris, Londres
+   - Promoções do dia nos sites de alerta (Melhores Destinos, Passagens Imperdíveis), qualquer origem/destino na Europa
+   - Para cada candidata, estime: posicionamento nacional (Rio → origem, ida e volta) + low-cost/trem até a Itália + bagagem
+2. Registre as melhores em `historico/rotas.csv` e rode `python3 scripts/rotas.py --dias 7`
+   (ranking porta a porta). Mantenha também `historico/passagens.csv` para o trecho internacional.
 3. Procure promoções do dia (dinheiro e milhas) nas fontes de `config/fontes.md`.
-4. Compare com preço-alvo e mediana histórica → COMPRAR / ESPERAR / MONITORAR.
+4. Compare o TOTAL com as faixas de `config/alertas.md` → COMPRAR / ESPERAR / MONITORAR.
+   Sempre aponte o risco de bilhetes separados (ver `guias/passagens-italia.md`).
 5. Considere a regra: janela típica boa para Europa saindo do Brasil é ~3 a 8 meses
    antes; alta temporada europeia (jun–ago) e feriados brasileiros encarecem.
 
