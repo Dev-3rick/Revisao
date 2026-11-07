@@ -1,4 +1,4 @@
-# Guia — Passagens Brasil → Itália
+# Guia — Passagens Rio → Europa (julho/2027)
 
 ## Quando comprar
 - Janela típica boa: **3 a 8 meses antes**; promoções relâmpago aparecem a qualquer momento.
@@ -25,3 +25,11 @@
 - **ETIAS** (autorização eletrônica, taxa de € 20; isentos <18 e >70 anos): Comissão Europeia indica início no 4º tri/2026, há relatos de adiamento para 2027 — conferir em europa.eu/etias.
 - Seguro viagem com cobertura mínima de € 30 mil é exigido no Schengen.
 - Passaporte válido por 3 meses após a saída prevista.
+- **Inglaterra (fora do Schengen):** brasileiros precisam de **UK ETA** (autorização eletrônica,
+  ~£ 16–20, válida por 2 anos). Fontes comerciais divergem: confirmar em gov.uk/eta.
+
+## Julho saindo do Rio (dados de 07/11/2026)
+- Julho é o mês mais caro: média de ida e volta GIG→Europa ~R$ 6.963 (Kayak).
+- Menores preços recentes, em qualquer data: ~R$ 3.959 (GIG–Paris, Kayak) e ~R$ 4.112 (Momondo).
+- R$ 2.500 em dinheiro para julho é raro → caminho realista: promoção relâmpago,
+  erro tarifário ou milhas compradas barato (`guias/milhas-do-zero.md`).

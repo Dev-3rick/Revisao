@@ -7,15 +7,17 @@ Execute na ordem. Meta: relatório pronto em `relatorios/AAAA-MM-DD.md`.
 2. Leia o relatório mais recente em `relatorios/` para saber o que mudou desde ontem.
 3. Calcule quantos dias faltam para a viagem (se a data existir).
 
-## Passo 1 — Câmbio
-1. Rode `python3 scripts/cotacoes.py` (atualiza `historico/cotacoes.csv`).
+## Passo 1 — Câmbio (foco: EURO; libra e franco como apoio)
+1. Rode `python3 scripts/cotacoes.py` (atualiza `historico/cotacoes.csv`) e
+   `python3 scripts/cotacoes.py --alerta` (mensagem curta do euro com a parcela do dia).
 2. Pesquise o **motivo** do movimento (Copom/Fed/BCE, fiscal, exterior) — 1 a 2 fontes.
 3. Às segundas: inclua a mediana do Boletim Focus para o câmbio no fim do ano.
 4. Opcional: cotação efetiva de euro em 1–2 casas/contas globais (VET com IOF).
 5. Veredito: aplique as regras de `config/alertas.md` → parcela dobrada / normal / segurar.
 
 ## Passo 2 — Passagens para a Itália
-1. Pesquise origem do perfil → FCO, MXP, VCE (e open-jaw) para a janela de datas.
+1. Pesquise GIG → Paris, Lisboa, Madri, Roma, Milão e Londres para julho/2027 (14–20 dias),
+   incluindo open-jaw (chegar em Paris/Londres, voltar da Itália). Use as faixas de `config/alertas.md`.
 2. Registre o menor preço encontrado por rota em `historico/passagens.csv`
    (`data_pesquisa,origem,destino,ida,volta,preco_brl,cia,escalas,fonte`).
 3. Procure promoções do dia (dinheiro e milhas) nas fontes de `config/fontes.md`.
@@ -27,7 +29,9 @@ Execute na ordem. Meta: relatório pronto em `relatorios/AAAA-MM-DD.md`.
 1. Bônus de transferência ativos (Livelo, Esfera, bancos → Smiles, LATAM Pass, Azul, TAP…).
 2. Promoções de compra de pontos/milhas e preço do milheiro.
 3. Promoções de resgate para Europa.
-4. Cruze com os saldos do perfil: "vale transferir X pontos de A para B agora?" — faça a conta.
+4. O usuário começa do zero (sem cartão): priorize **compra de pontos/milhas em promoção**,
+   clubes, transferência bonificada e milhas grátis (contas globais). Para qualquer resgate
+   encontrado, rode `python3 scripts/milhas.py` e mostre a conta. Guia: `guias/milhas-do-zero.md`.
 5. Registre promoções relevantes em `historico/promocoes.csv`
    (`data,tipo,programa,descricao,validade,fonte`).
 
@@ -49,6 +53,11 @@ Para cada item A/B de `perfil/compras.md`: preço atual, menor preço recente, v
 2. Salve em `relatorios/AAAA-MM-DD.md`.
 3. Commit: `relatorio: AAAA-MM-DD` (inclua os CSVs de `historico/`) e push.
 4. A mensagem final da sessão deve ser o **Resumo em 5 linhas** do relatório.
+
+## Alerta do euro (2x por dia útil — tarefa separada)
+1. `python3 scripts/cotacoes.py --alerta`
+2. Pesquise em 1 frase o motivo do movimento do dia, se for > 0,5%.
+3. A mensagem final é o texto do alerta, já pronto para colar no WhatsApp.
 
 ## Rotina semanal (segunda-feira — além do diário)
 - Tendência da semana do câmbio (alta/baixa e por quê) + Focus.

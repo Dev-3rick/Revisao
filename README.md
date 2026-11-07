@@ -30,7 +30,9 @@ Estrutura para o Claude pesquisar **todo dia** e entregar um relatório objetivo
 
 ```
 perfil/perfil.md            ← PREENCHA: cidade, cartões, programas de milhas, saldo
-perfil/viagem-italia.md     ← PREENCHA: datas, quem vai, orçamento, preço-alvo
+perfil/viagem-italia.md     ← viagem de julho/2027: metas, orçamento, marcos
+perfil/roteiro-europa.md    ← roteiro Paris–Londres–Munique–Suíça–Itália + orçamento em €
+perfil/plano-euro.csv       ← registre aqui cada compra de euro (data,euros,cotacao)
 perfil/compras.md           ← lista de compras planejadas com preço-alvo
 config/alertas.md           ← gatilhos numéricos (quando avisar "compre agora")
 config/fontes.md            ← fontes confiáveis por tema
@@ -39,14 +41,19 @@ rotina/template-relatorio.md← formato fixo do relatório
 guias/                      ← estratégias de câmbio, passagens, milhas, cartões
 historico/                  ← cotacoes.csv, passagens.csv, promocoes.csv
 relatorios/                 ← um arquivo por dia
-scripts/cotacoes.py         ← PTAX USD/EUR + médias + sinal
+scripts/cotacoes.py         ← PTAX USD/EUR/GBP/CHF + médias + sinal; --alerta = mensagem do euro
+scripts/milhas.py           ← calculadora: milhas compradas vs. pagar em dinheiro
 ```
 
 ## Uso
 
-- **Automático:** tarefa agendada diária roda `rotina/pesquisa-diaria.md`.
+- **Automático:**
+  - 💶 Alerta do euro: dias úteis, 10h25 e 13h25 (depois da prévia e do fechamento da PTAX)
+  - 📋 Relatório completo: todo dia às 7h40 (passagens, milhas, promoções, câmbio)
+  - Entrega: notificação no app do Claude; o texto já sai no formato do WhatsApp
 - **Manual:** peça ao Claude: _"Rode a pesquisa diária"_.
-- **Só câmbio:** `python3 scripts/cotacoes.py`
+- **Só câmbio:** `python3 scripts/cotacoes.py` · **alerta:** `python3 scripts/cotacoes.py --alerta`
+- **Milhas valem?** `python3 scripts/milhas.py --dinheiro 5200 --milhas 100000 --taxas 900 --milheiro 17`
 
 > Nada aqui é recomendação financeira profissional. O relatório mostra dados, fontes e
 > o raciocínio; a decisão é sua.

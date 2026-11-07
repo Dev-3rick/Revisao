@@ -23,6 +23,11 @@ Ninguém acerta o fundo do câmbio. Estratégia: **compra programada (preço mé
 **IOF:** em 2025 o governo unificou em **3,5%** o IOF de cartão no exterior, compra de
 moeda em espécie e remessa para conta própria. Confirme a alíquota vigente antes de decidir.
 
+## Libra e franco suíço (Inglaterra e Suíça)
+Não compre espécie dessas moedas. Use o cartão de débito da conta global, que converte na
+hora (ou mantenha saldo pequeno em GBP/CHF, se a conta permitir). O script mostra as duas
+cotações para referência.
+
 ## O que move o câmbio (para explicar no relatório)
 - Juros: Selic (Copom) vs. Fed (EUA) e BCE (euro)
 - Cenário fiscal brasileiro, eleições, notícias de Brasília
