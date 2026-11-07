@@ -1,5 +1,8 @@
 # Relatório diário — AAAA-MM-DD (dia da semana)
 
+> Versão completa (arquivo em `relatorios/`). A versão curta para o celular/WhatsApp segue
+> `modelos/newsletter-whatsapp.md`.
+
 ## ⚡ Resumo em 5 linhas
 1. **Euro:** R$ x,xxxx (±x% 30d) → [COMPRAR DOBRADO / NORMAL / SEGURAR]
 2. **Dólar:** R$ x,xxxx (±x% 30d) → […]

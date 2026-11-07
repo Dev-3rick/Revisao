@@ -54,10 +54,15 @@ Para cada item A/B de `perfil/compras.md`: preço atual, menor preço recente, v
    (sciopero de transportes), eventos que encarecem hospedagem.
 
 ## Passo 7 — Entrega
-1. Escreva o relatório seguindo `rotina/template-relatorio.md`. Máx. ~1 página de resumo.
-2. Salve em `relatorios/AAAA-MM-DD.md`.
-3. Commit: `relatorio: AAAA-MM-DD` (inclua os CSVs de `historico/`) e push.
-4. A mensagem final da sessão deve ser o **Resumo em 5 linhas** do relatório.
+**A. Pedido manual no chat:**
+1. Relatório completo (`rotina/template-relatorio.md`) em `relatorios/AAAA-MM-DD.md`.
+2. `python3 scripts/painel.py` (atualiza `modelos/radar-painel.html`).
+3. Commit `relatorio: AAAA-MM-DD` com `historico/`, `relatorios/` e `modelos/`, e push.
+
+**B. Tarefa agendada (vira notificação no celular):**
+1. Sem commit, push ou PR: os CSVs atualizados ficam só na sessão. Antes da resposta final,
+   restaure o repositório (`git checkout -- . && git clean -fd`).
+2. A resposta final é a **newsletter no formato de `modelos/newsletter-whatsapp.md`** — e só ela.
 
 ## Alerta do euro (2x por dia útil — tarefa separada)
 1. `python3 scripts/cotacoes.py --alerta`

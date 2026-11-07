@@ -41,9 +41,13 @@ rotina/template-relatorio.md← formato fixo do relatório
 guias/                      ← estratégias de câmbio, passagens, milhas, cartões
 historico/                  ← cotacoes.csv, passagens.csv, promocoes.csv
 relatorios/                 ← um arquivo por dia
+modelos/newsletter-whatsapp.md ← formato oficial da mensagem diária (WhatsApp/notificação)
+modelos/radar-whatsapp.html ← prévia da newsletter com botão "copiar"
+modelos/radar-painel.html   ← painel visual (gerado por scripts/painel.py)
 scripts/cotacoes.py         ← PTAX USD/EUR/GBP/CHF + médias + sinal; --alerta = mensagem do euro
 scripts/milhas.py           ← calculadora: milhas compradas vs. pagar em dinheiro
 scripts/rotas.py            ← ranking de rotas pelo custo total porta a porta até a Itália
+scripts/painel.py           ← gera o painel visual com os dados dos históricos
 ```
 
 ## Uso
@@ -51,7 +55,8 @@ scripts/rotas.py            ← ranking de rotas pelo custo total porta a porta 
 - **Automático:**
   - 💶 Alerta do euro: dias úteis, 10h25 e 13h25 (depois da prévia e do fechamento da PTAX)
   - 📋 Relatório completo: todo dia às 7h40 (passagens, milhas, promoções, câmbio)
-  - Entrega: notificação no app do Claude; o texto já sai no formato do WhatsApp
+  - Entrega: notificação no app do Claude, no formato da newsletter "Radar Itália"
+    (`modelos/newsletter-whatsapp.md`), pronta para colar no WhatsApp
 - **Manual:** peça ao Claude: _"Rode a pesquisa diária"_.
 - **Só câmbio:** `python3 scripts/cotacoes.py` · **alerta:** `python3 scripts/cotacoes.py --alerta`
 - **Rota mais barata até a Itália:** `python3 scripts/rotas.py`

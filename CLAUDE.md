@@ -15,5 +15,8 @@ milhas, cartões, cashback, compras). Idioma: **português do Brasil**.
    público, cartão exigido). Desconfie de "promoções" sem fonte oficial.
 6. Linguagem: clara, objetiva, com veredito por tema: **COMPRAR / ESPERAR / MONITORAR**
    e o porquê em 1 linha.
-7. Campos `[PREENCHER]` no perfil: use premissas razoáveis, registre a premissa no
+7. Promoção encerrada, ou para datas fora da viagem, nunca é "rota mais barata do dia": no máximo
+   aparece como referência, marcada como tal.
+8. Formato da mensagem diária: `modelos/newsletter-whatsapp.md`. Painel visual: `python3 scripts/painel.py`.
+9. Campos `[PREENCHER]` no perfil: use premissas razoáveis, registre a premissa no
    relatório e liste no fim "dados que faltam no perfil".
