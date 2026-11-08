@@ -21,11 +21,11 @@
 ## Programas de pontos e milhas (saldo atual)
 | Programa | Saldo | Vencimento | Clube assinado? |
 |---|---|---|---|
-| Livelo | conta aberta · saldo [CONFIRMAR] | — | não |
+| Livelo | conta aberta · saldo 0 (08/11/2026) | — | não |
 | Esfera | 0 | — | não |
 | Smiles | 0 | — | não |
 | LATAM Pass | 0 | — | não |
-| Azul Fidelidade | conta aberta · saldo [CONFIRMAR] | — | não |
+| Azul Fidelidade | conta aberta · saldo 0 (08/11/2026) | — | não |
 
 Ponto de partida = zero. Estratégia de acúmulo sem cartão: `guias/milhas-do-zero.md`.
 
