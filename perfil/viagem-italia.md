@@ -7,7 +7,7 @@
 - Viajantes: eu + uma amiga em parte da viagem (cada um paga a sua passagem)
 
 ## Países (prioridade)
-Itália (base) + **França, Inglaterra, Alemanha, Suíça**. Roteiro e orçamento: `perfil/roteiro-europa.md`.
+Itália (base em Veneza) + **França, Inglaterra, Polônia (Cracóvia e Auschwitz), Alemanha, Suíça**. Roteiro e orçamento: `perfil/roteiro-europa.md`.
 
 ## Orçamento e metas
 | Item | Meta | Observação |
@@ -31,6 +31,7 @@ Itália (base) + **França, Inglaterra, Alemanha, Suíça**. Roteiro e orçament
 | UK ETA (autorização para entrar na Inglaterra) | até maio/2027 | [ ] |
 | Conferir ETIAS (Schengen) — início previsto entre o fim de 2026 e 2027 | abr/2027 | [ ] |
 | Eurostar Paris⇄Londres e trens/ônibus/low-costs com antecedência | fev–abr/2027 | [ ] |
+| Reservar a visita guiada de Auschwitz em visit.auschwitz.org (abre ~90 dias antes) | abr/2027 | [ ] |
 | Hostels com cancelamento grátis | mar–abr/2027 | [ ] |
 | Seguro viagem (Schengen exige no mínimo € 30 mil de cobertura) | jun/2027 | [ ] |
 | Registro grátis no portal do contributo de acesso de Veneza (cda.ve.it), como visitante de parente | jun/2027 | [ ] |
