@@ -1,0 +1,304 @@
+<title>Radar Itália</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: faixa "Hoje" com 3 decisões → gráfico com zonas de compra → plano de euros → passagens → milhas → marcos */
+:root{
+  --bg:#eef1ec; --panel:#fbfcfa; --ink:#17211c; --muted:#5b6a62; --line:#d5dcd5; --grid:#e3e8e2;
+  --accent:#0a6b4f; --ok:#16855f; --warn:#b5730c; --bad:#b8392d;
+  --ok-soft:color-mix(in srgb,var(--ok) 14%,transparent); --warn-soft:color-mix(in srgb,var(--warn) 15%,transparent); --bad-soft:color-mix(in srgb,var(--bad) 13%,transparent);
+  --display:"Familjen Grotesk","Arial Narrow",Arial,sans-serif; --body:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d1411;--panel:#151f1a;--ink:#e5ede8;--muted:#98aaa0;--line:#26352d;--grid:#1f2c25;--accent:#43c99b;--ok:#43c99b;--warn:#e6a64b;--bad:#f07c6f;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0d1411;--panel:#151f1a;--ink:#e5ede8;--muted:#98aaa0;--line:#26352d;--grid:#1f2c25;--accent:#43c99b;--ok:#43c99b;--warn:#e6a64b;--bad:#f07c6f;color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45;padding-block:20px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+h1{font-size:2rem;line-height:1.1}
+h2{font-size:1.2rem}
+.sub{color:var(--muted);margin:4px 0 0}
+.eyebrow{font-size:.72rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0}
+.head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:6px 16px;margin-bottom:12px}
+/* Hoje */
+.hoje{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.dec{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;border-top:5px solid var(--tone,var(--line));min-width:0}
+.dec .v{font-family:var(--display);font-weight:700;font-size:1.55rem;color:var(--tone)}
+.dec p{margin:0}
+.dec .det{color:var(--muted);font-size:.9rem}
+.t-ok{--tone:var(--ok)} .t-warn{--tone:var(--warn)} .t-bad{--tone:var(--bad)} .t-info{--tone:var(--accent)}
+/* Controles */
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex-wrap:wrap}
+.seg button{font:inherit;font-size:.85rem;font-weight:500;background:transparent;color:var(--ink);border:0;padding:7px 12px;cursor:pointer}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
+button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.ctrl{display:flex;flex-wrap:wrap;gap:8px}
+/* Gráfico */
+.chartwrap{display:grid;grid-template-columns:minmax(0,1fr) 92px;gap:12px;align-items:stretch}
+#chart{width:100%;height:260px;display:block;touch-action:pan-y}
+.tip{font-size:.85rem;color:var(--muted);min-height:1.4em;margin-top:4px}
+.termo{display:flex;flex-direction:column;align-items:center;gap:6px}
+.termo .tube{position:relative;flex:1;width:22px;border-radius:12px;overflow:hidden;min-height:180px;background:linear-gradient(to top,var(--ok) 0 25%,var(--warn) 25% 60%,var(--bad) 60% 100%);opacity:.9}
+.termo .mk{position:absolute;left:-6px;right:-6px;height:4px;background:var(--ink);border-radius:2px;transform:translateY(50%)}
+.termo .pct{font-family:var(--mono);font-size:.95rem}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-top:12px}
+.stat{border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.stat b{display:block;font-size:.7rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.stat span{font-family:var(--mono);font-size:1rem}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.82rem;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+/* Plano de euros */
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}
+.prog{height:14px;border-radius:8px;background:var(--grid);overflow:hidden;margin:10px 0 6px}
+.prog i{display:block;height:100%;background:var(--accent)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:.92rem}
+.kv dt{color:var(--muted)} .kv dd{margin:0;text-align:right}
+.sim{display:flex;flex-direction:column;gap:8px}
+.sim label{font-weight:600}
+.sim .row{display:flex;gap:8px;align-items:center}
+.sim input{font:inherit;font-family:var(--mono);width:110px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+.sim output{font-family:var(--mono);font-size:1.15rem}
+/* Régua de passagens */
+.ruler{position:relative;height:100px;margin:30px 4px 8px}
+.ruler .bar{position:absolute;left:0;right:0;top:18px;height:10px;border-radius:6px;background:linear-gradient(to right,var(--ok) 0 30%,var(--warn) 30% 55%,var(--bad) 55% 100%);opacity:.85}
+.ruler .tick{position:absolute;top:32px;transform:translateX(-50%);font-size:.72rem;line-height:1.2;color:var(--muted);white-space:nowrap;text-align:center}
+.ruler .tick.low{top:68px}
+.ruler .tick b{display:block;font-family:var(--mono);font-weight:500;color:var(--ink)}
+.ruler .tick.last{transform:translateX(-100%);text-align:right}
+.ruler .pin{position:absolute;top:-6px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;font-size:.75rem;font-weight:600;white-space:nowrap}
+.ruler .pin::after{content:"";width:3px;height:22px;background:var(--ink);border-radius:2px}
+.scroll{overflow-x:auto}
+table{width:100%;min-width:620px;border-collapse:collapse;font-size:.88rem}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.7rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+td.n{white-space:nowrap;font-family:var(--mono)}
+.chip{display:inline-block;align-self:start;justify-self:end;font-size:.72rem;font-weight:600;border-radius:99px;padding:2px 9px;white-space:nowrap}
+.c-ok{color:var(--ok);background:var(--ok-soft)} .c-warn{color:var(--warn);background:var(--warn-soft)} .c-bad{color:var(--bad);background:var(--bad-soft)} .c-mut{color:var(--muted);background:var(--grid)}
+ul.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+ul.list li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;padding:10px 0;border-bottom:1px solid var(--line)}
+ul.list li:last-child{border-bottom:0}
+ul.list .d{color:var(--muted);font-size:.86rem;grid-column:1/-1}
+.marcos li.feito .m{text-decoration:line-through;color:var(--muted)}
+.src{font-size:.8rem;color:var(--muted);margin:10px 0 0}
+.como{font-size:.88rem;color:var(--muted)}
+.como p{margin:0 0 6px}
+@media (max-width:520px){.chartwrap{grid-template-columns:minmax(0,1fr) 56px} h1{font-size:1.65rem}}
+@media (prefers-reduced-motion:no-preference){.prog i{transition:width .4s ease}}
+</style>
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Viagem · Itália, julho de 2027</p>
+    <h1>Radar Itália</h1>
+    <p class="sub" id="sub">—</p>
+  </header>
+
+  <section aria-labelledby="h-hoje">
+    <h2 id="h-hoje" style="margin-bottom:10px">O que fazer hoje</h2>
+    <div class="hoje">
+      <article class="dec" id="d-euro"><span class="eyebrow">Euro</span><span class="v">—</span><p></p><p class="det"></p></article>
+      <article class="dec" id="d-voo"><span class="eyebrow">Passagem até a Itália</span><span class="v">—</span><p></p><p class="det"></p></article>
+      <article class="dec" id="d-milhas"><span class="eyebrow">Milhas e pontos</span><span class="v">—</span><p></p><p class="det"></p></article>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="h-cambio">
+    <div class="head">
+      <h2 id="h-cambio">Câmbio e hora de comprar</h2>
+      <div class="ctrl">
+        <div class="seg" role="group" aria-label="Moeda" id="moedas"></div>
+        <div class="seg" role="group" aria-label="Período" id="periodos"></div>
+      </div>
+    </div>
+    <div class="chartwrap">
+      <div style="min-width:0">
+        <svg id="chart" role="img" aria-label="Gráfico da cotação com zonas de compra"></svg>
+        <div class="tip" id="tip">Passe o dedo ou o mouse no gráfico para ver cada dia.</div>
+      </div>
+      <div class="termo" aria-label="Posição do preço na faixa de 90 dias">
+        <span class="eyebrow">Faixa 90d</span>
+        <div class="tube"><span class="mk" id="mk"></span></div>
+        <span class="pct" id="pct">—</span>
+      </div>
+    </div>
+    <div class="legend">
+      <span><i style="background:var(--ok-soft);border:1px solid var(--ok)"></i>Zona boa: comprar parcela dobrada</span>
+      <span><i style="background:var(--warn-soft);border:1px solid var(--warn)"></i>Zona neutra: parcela normal</span>
+      <span><i style="background:var(--bad-soft);border:1px solid var(--bad)"></i>Zona cara: segurar</span>
+    </div>
+    <div class="stats" id="stats"></div>
+    <p class="src">PTAX de venda, Banco Central. As zonas usam a mínima e a máxima dos últimos 90 dias úteis. Na ARQ o preço é estimado: PTAX + 0,5%.</p>
+  </section>
+
+  <section class="panel two" aria-labelledby="h-plano">
+    <div>
+      <h2 id="h-plano">Plano de euros</h2>
+      <div class="prog" aria-hidden="true"><i id="prog" style="width:0"></i></div>
+      <p class="num" id="prog-t" style="margin:0 0 10px">—</p>
+      <dl class="kv" id="plano"></dl>
+    </div>
+    <form class="sim" id="sim">
+      <label for="sim-eur">Simular uma compra na ARQ</label>
+      <div class="row"><input id="sim-eur" type="number" min="1" step="1" value="133" inputmode="numeric"><span>euros</span></div>
+      <output id="sim-out" for="sim-eur">—</output>
+      <span class="como" id="sim-det"></span>
+    </form>
+  </section>
+
+  <section class="panel" aria-labelledby="h-voo">
+    <div class="head"><h2 id="h-voo">Passagem: régua de preço</h2><span class="eyebrow">ida e volta, custo total até a Itália</span></div>
+    <div class="ruler" id="ruler"></div>
+    <div class="scroll" style="margin-top:22px"><table>
+      <thead><tr><th>Rota</th><th>Total</th><th>Situação</th><th>Observação</th><th>Fonte</th></tr></thead>
+      <tbody id="rotas"></tbody></table></div>
+  </section>
+
+  <div class="two">
+    <section class="panel" aria-labelledby="h-milhas">
+      <h2 id="h-milhas">Milhas e promoções</h2>
+      <ul class="list" id="promos"></ul>
+    </section>
+    <section class="panel" aria-labelledby="h-marcos">
+      <h2 id="h-marcos">Marcos da viagem</h2>
+      <ul class="list marcos" id="marcos"></ul>
+    </section>
+  </div>
+
+  <section class="panel como" aria-labelledby="h-como">
+    <h2 id="h-como" style="color:var(--ink);margin-bottom:8px">Como ler</h2>
+    <p><b>Posição na faixa:</b> 0% é o menor preço dos últimos 90 dias úteis e 100% é o maior. Abaixo de 25% é zona boa; acima de 60%, zona cara.</p>
+    <p><b>Parcela:</b> os € 2.000 divididos em compras a cada 15 dias até 15/06/2027. Zona boa compra o dobro; zona cara, metade.</p>
+    <p><b>Custo total da passagem:</b> voo nacional até o aeroporto de saída + voo internacional + low-cost ou trem até a Itália + bagagem. Linhas marcadas como referência não são preço de julho.</p>
+    <p>Painel gerado por <span class="num">scripts/painel.py</span>. Não é recomendação financeira.</p>
+  </section>
+</div>
+
+<script>
+(function(){
+var D=__DADOS__;
+var NOMES={EUR:"Euro",USD:"Dólar",GBP:"Libra",CHF:"Franco suíço"},SIMB={EUR:"€",USD:"US$",GBP:"£",CHF:"CHF"};
+var PER=[["3M",63],["6M",126],["1A",260]];
+var st={m:"EUR",p:63};
+function $(id){return document.getElementById(id)}
+function css(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()}
+function brl(v,c){return v.toLocaleString("pt-BR",{minimumFractionDigits:c,maximumFractionDigits:c})}
+function dt(iso){var p=iso.split("-");return p[2]+"/"+p[1]+"/"+p[0]}
+function dias(a,b){return Math.round((new Date(b)-new Date(a))/864e5)}
+function info(serie){
+  var v=serie.map(function(d){return d[1]}),w=v.slice(-90),lo=Math.min.apply(0,w),hi=Math.max.apply(0,w),at=v[v.length-1];
+  var m30=v.slice(-30).reduce(function(a,b){return a+b},0)/Math.min(30,v.length);
+  var pos=hi==lo?0:(at-lo)/(hi-lo)*100;
+  return {at:at,m30:m30,lo:lo,hi:hi,pos:pos,z25:lo+.25*(hi-lo),z60:lo+.6*(hi-lo),ant:v[v.length-2]};
+}
+function zona(pos){return pos<=25?{t:"ok",n:"COMPRAR DOBRADO",c:"c-ok",mult:2}:pos<=60?{t:"warn",n:"COMPRAR NORMAL",c:"c-warn",mult:1}:{t:"bad",n:"SEGURAR",c:"c-bad",mult:.5}}
+function setDec(id,tone,v,p,det){var e=$(id);e.className="dec t-"+tone;e.children[1].textContent=v;e.children[2].textContent=p;e.children[3].textContent=det}
+
+// cabeçalho
+var ult=D.series.EUR[D.series.EUR.length-1][0];
+$("sub").textContent="PTAX de "+dt(ult)+" · faltam "+dias(D.hoje,D.viagem)+" dias para julho de 2027 · gerado em "+dt(D.hoje);
+
+// plano
+var comprado=D.compras.reduce(function(a,c){return a+c.euros},0);
+var gasto=D.compras.reduce(function(a,c){return a+c.euros*c.cotacao},0);
+var falta=Math.max(D.metaEuro-comprado,0),quinz=Math.max(Math.floor(dias(D.hoje,D.fimCompra)/14),1),parc=falta/quinz;
+var ie=info(D.series.EUR),ze=zona(ie.pos),arq=ie.at*(1+D.spreadArq/100),hojeEur=Math.round(parc*ze.mult);
+
+// decisão: euro
+setDec("d-euro",ze.t,ze.n,"Compre € "+hojeEur+" hoje, cerca de R$ "+brl(hojeEur*arq,0)+" na ARQ.",
+  "R$ "+brl(ie.at,4)+" · "+brl(ie.pos,0)+"% da faixa de 90 dias. Zona boa abaixo de R$ "+brl(ie.z25,2)+".");
+
+// decisão: passagem
+var reais=D.rotas.filter(function(r){return !r.referencia}),melhor=reais[0],refm=D.rotas[0];
+if(melhor&&melhor.total<=D.faixas[1][0]){setDec("d-voo","ok","COMPRAR",melhor.rota+" por R$ "+brl(melhor.total,0)+".","Está na faixa excelente (até R$ "+brl(D.faixas[1][0],0)+").")}
+else if(melhor){setDec("d-voo","warn","MONITORAR","Melhor cotação: "+melhor.rota+", R$ "+brl(melhor.total,0)+".","Meta R$ "+brl(D.faixas[0][0],0)+"; excelente até R$ "+brl(D.faixas[1][0],0)+".")}
+else{setDec("d-voo","warn","MONITORAR","Ainda não há cotação real para julho de 2027.",refm?"Referência: "+refm.rota+" a partir de R$ "+brl(refm.total,0)+" (sem os trechos até a Itália).":"Nenhuma rota registrada.")}
+
+// decisão: milhas
+var vig=D.promos.filter(function(p){return p.status=="vigente"}),bf0=D.blackFriday[0],bf1=D.blackFriday[1],ateBF=dias(D.hoje,bf0);
+var naBF=D.hoje>=bf0&&D.hoje<=bf1;
+if(naBF){setDec("d-milhas","ok","BLACK FRIDAY","Período de promoções fortes: vigie compra de pontos + bônus de transferência.","Só compre com o resgate já simulado.")}
+else if(ateBF>0){setDec("d-milhas","info","ESPERAR","Black Friday em "+ateBF+" dias ("+dt(bf0)+").",vig.length?vig.length+" oferta(s) aberta(s) agora, nenhuma é o combo forte.":"Nenhuma oferta forte aberta agora.")}
+else{setDec("d-milhas","info","MONITORAR","Fora da janela da Black Friday.",vig.length+" oferta(s) aberta(s).")}
+
+// plano de euros
+$("prog").style.width=Math.min(comprado/D.metaEuro*100,100)+"%";
+$("prog-t").textContent="€ "+brl(comprado,0)+" de € "+brl(D.metaEuro,0)+" comprados";
+var kv=[["Preço médio",comprado?"R$ "+brl(gasto/comprado,4):"—"],["Faltam",  "€ "+brl(falta,0)],["Parcela base","€ "+brl(parc,0)+" a cada 15 dias"],["Compra de hoje","€ "+hojeEur+" ("+(ze.mult==2?"dobrada":ze.mult==1?"normal":"meia")+")"],["Prazo","até "+dt(D.fimCompra)]];
+kv.forEach(function(r){var a=document.createElement("dt"),b=document.createElement("dd");a.textContent=r[0];b.textContent=r[1];b.className="num";$("plano").append(a,b)});
+$("sim-eur").value=hojeEur||1;
+function sim(){var e=Math.max(+$("sim-eur").value||0,0);$("sim-out").textContent="≈ R$ "+brl(e*arq,2);
+  $("sim-det").textContent="€ 1 ≈ R$ "+brl(arq,4)+" na ARQ (PTAX R$ "+brl(ie.at,4)+" + 0,5%). Registre cada compra em perfil/plano-euro.csv."}
+$("sim").addEventListener("submit",function(e){e.preventDefault()});$("sim-eur").addEventListener("input",sim);sim();
+
+// régua
+var fx=D.faixas,mx=fx[fx.length-1][0]*1.05,R=$("ruler");
+function pc(v){return Math.min(v/mx*100,100)}
+R.innerHTML='<div class="bar"></div>';
+fx.forEach(function(f,i){var t=document.createElement("div"),b=document.createElement("b");t.className="tick"+(i%2?" low":"")+(i==fx.length-1?" last":"");t.style.left=pc(f[0])+"%";
+  b.textContent=brl(f[0]/1000,1).replace(",0","")+" mil";t.append(b,f[1]);R.appendChild(t)});
+var alvo=melhor||refm;
+if(alvo){var p=document.createElement("div");p.className="pin";p.style.left=pc(alvo.total)+"%";p.textContent=(melhor?"Melhor hoje":"Referência")+" R$ "+brl(alvo.total,0);R.appendChild(p)}
+D.rotas.forEach(function(r){var tr=document.createElement("tr");
+  var s=r.referencia?["referência","c-mut"]:r.total<=fx[0][0]?["meta","c-ok"]:r.total<=fx[1][0]?["excelente","c-ok"]:r.total<=fx[2][0]?["bom","c-warn"]:["caro","c-bad"];
+  [r.rota,"R$ "+brl(r.total,0),null,r.obs,r.fonte+", "+dt(r.data)].forEach(function(c,i){var td=document.createElement("td");
+    if(i==2){var ch=document.createElement("span");ch.className="chip "+s[1];ch.textContent=s[0];td.appendChild(ch)}else td.textContent=c;
+    if(i==1)td.className="n";tr.appendChild(td)});$("rotas").appendChild(tr)});
+if(!D.rotas.length){$("rotas").innerHTML='<tr><td colspan="5">Nenhuma rota registrada ainda.</td></tr>'}
+
+// promoções
+D.promos.forEach(function(p){var li=document.createElement("li"),a=document.createElement("span"),b=document.createElement("span"),c=document.createElement("span");
+  a.innerHTML="<b></b> ";a.firstChild.textContent=p.programa;a.append(p.tipo);
+  b.className="chip "+(p.status=="vigente"?"c-ok":p.status=="encerrada"?"c-mut":"c-warn");b.textContent=p.status=="vigente"?"aberta até "+p.validade:p.status;
+  c.className="d";c.textContent=p.descricao+" · "+p.fonte;li.append(a,b,c);$("promos").appendChild(li)});
+
+// marcos
+D.marcos.forEach(function(m){var li=document.createElement("li"),a=document.createElement("span"),b=document.createElement("span");
+  if(m.feito)li.className="feito";a.className="m";a.textContent=m.marco;b.className="chip "+(m.feito?"c-ok":"c-mut");b.textContent=m.feito?"feito":m.prazo;
+  li.append(a,b);$("marcos").appendChild(li)});
+
+// controles do gráfico
+function seg(el,itens,ativo,fn){el.innerHTML="";itens.forEach(function(it){var b=document.createElement("button");b.type="button";b.textContent=it[0];
+  b.setAttribute("aria-pressed",String(it[1]===ativo));b.addEventListener("click",function(){fn(it[1])});el.appendChild(b)})}
+function controles(){seg($("moedas"),Object.keys(NOMES).map(function(k){return [NOMES[k],k]}),st.m,function(v){st.m=v;controles();draw()});
+  seg($("periodos"),PER,st.p,function(v){st.p=v;controles();draw()})}
+
+// gráfico
+var svg=$("chart"),NS="http://www.w3.org/2000/svg";
+function el(t,a,txt){var e=document.createElementNS(NS,t);for(var k in a)e.setAttribute(k,a[k]);if(txt!=null)e.textContent=txt;svg.appendChild(e);return e}
+function draw(){
+  var S=D.series[st.m],I=info(S),P=S.slice(-st.p),W=svg.clientWidth||640,H=260,m={l:46,r:10,t:10,b:24};
+  svg.setAttribute("viewBox","0 0 "+W+" "+H);svg.innerHTML="";
+  var vals=P.map(function(d){return d[1]}),lo=Math.min(Math.min.apply(0,vals),I.lo),hi=Math.max(Math.max.apply(0,vals),I.hi),pad=(hi-lo)*.08;lo-=pad;hi+=pad;
+  var L=P.length-1,x=function(i){return m.l+i*(W-m.l-m.r)/L},y=function(v){return m.t+(hi-v)/(hi-lo)*(H-m.t-m.b)};
+  // zonas
+  [[lo,I.z25,"--ok"],[I.z25,I.z60,"--warn"],[I.z60,hi,"--bad"]].forEach(function(z){el("rect",{x:m.l,width:W-m.l-m.r,y:y(z[1]),height:Math.max(y(z[0])-y(z[1]),0),fill:css(z[2]),opacity:.11})});
+  // grade
+  for(var k=0;k<=4;k++){var t=lo+(hi-lo)*k/4;el("line",{x1:m.l,x2:W-m.r,y1:y(t),y2:y(t),stroke:css("--grid"),"stroke-width":1});
+    el("text",{x:m.l-6,y:y(t)+4,"text-anchor":"end","font-size":11,fill:css("--muted"),"font-family":"IBM Plex Mono, monospace"},brl(t,2))}
+  [0,Math.floor(L/2),L].forEach(function(i){el("text",{x:x(i),y:H-6,"text-anchor":i==0?"start":i==L?"end":"middle","font-size":11,fill:css("--muted")},dt(P[i][0]).slice(0,5)+"/"+P[i][0].slice(2,4))});
+  // média 30d
+  el("line",{x1:m.l,x2:W-m.r,y1:y(I.m30),y2:y(I.m30),stroke:css("--ink"),"stroke-dasharray":"4 4","stroke-width":1,opacity:.55});
+  el("text",{x:W-m.r-4,y:y(I.m30)-5,"text-anchor":"end","font-size":11,fill:css("--muted")},"média 30d");
+  var pts=P.map(function(d,i){return x(i)+","+y(d[1])}).join(" ");
+  el("polyline",{points:pts,fill:"none",stroke:css("--accent"),"stroke-width":2.4,"stroke-linejoin":"round"});
+  var zz=zona(I.pos);el("circle",{cx:x(L),cy:y(vals[L]),r:5.5,fill:css(zz.t=="ok"?"--ok":zz.t=="warn"?"--warn":"--bad"),stroke:css("--panel"),"stroke-width":2});
+  var cur=el("circle",{cx:-20,cy:-20,r:4,fill:css("--ink")});
+  function mv(ev){var r=svg.getBoundingClientRect(),cx=(ev.touches?ev.touches[0].clientX:ev.clientX)-r.left,px=cx*(W/r.width);
+    var i=Math.max(0,Math.min(L,Math.round((px-m.l)/(W-m.l-m.r)*L))),v=vals[i];cur.setAttribute("cx",x(i));cur.setAttribute("cy",y(v));
+    var zn=v<=I.z25?"zona boa":v<=I.z60?"zona neutra":"zona cara";$("tip").textContent=dt(P[i][0])+" · R$ "+brl(v,4)+" · "+zn}
+  svg.onmousemove=mv;svg.ontouchstart=mv;svg.ontouchmove=mv;
+  // termômetro e números
+  $("mk").style.bottom=Math.min(Math.max(I.pos,0),100)+"%";$("pct").textContent=brl(I.pos,0)+"%";
+  var var1=(I.at/I.ant-1)*100,var30=(I.at/I.m30-1)*100,sb=SIMB[st.m];
+  $("stats").innerHTML="";
+  [["Hoje ("+sb+" 1)","R$ "+brl(I.at,4)],["Vs. dia anterior",(var1>=0?"+":"")+brl(var1,2)+"%"],["Vs. média 30d",(var30>=0?"+":"")+brl(var30,2)+"%"],
+   ["Zona boa abaixo de","R$ "+brl(I.z25,4)],["Zona cara acima de","R$ "+brl(I.z60,4)],["Sinal",zz.n]].forEach(function(s){
+    var d=document.createElement("div"),b=document.createElement("b"),sp=document.createElement("span");d.className="stat";b.textContent=s[0];sp.textContent=s[1];d.append(b,sp);$("stats").appendChild(d)});
+}
+controles();draw();window.addEventListener("resize",draw);
+if(window.matchMedia)matchMedia("(prefers-color-scheme: dark)").addEventListener("change",draw);
+})();
+</script>
