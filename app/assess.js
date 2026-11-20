@@ -193,6 +193,7 @@
           $("asSpRes").innerHTML = `<p class="small muted">analisando…</p>`;
           try {
             const r = SL.alignScore(text, await SL.scribe(blob, "en"));
+            SL.logPron(r, "teste de nível");
             $("asSpRes").innerHTML = `<div class="row between"><p class="diff grow">${SL.diffHTML(r)}</p><span class="score" style="color:${SL.scoreColor(r.pct)}">${r.pct}%</span></div><button class="btn primary big" id="asOk">Próxima</button>`;
             $("asOk").onclick = () => nextSpeak(r.pct);
           } catch (e) { $("asSpRes").innerHTML = `<p class="small">${esc(errText(e))}</p>`; }

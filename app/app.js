@@ -31,7 +31,9 @@
   // One-paragraph learner profile sent to the agent in every session.
   function profileSummary() {
     const p = S.profile;
-    if (!p) return "Not assessed yet. Ask about the learner's goals naturally when relevant.";
+    const d = store.get("diagnosis", null);
+    const notes = d ? ` Coach notes from the learner's recent practice: ${[d.focus_for_coach, (d.top_issues || []).slice(0, 3).map((x) => x.issue_en || x.issue).join("; "), d.style_en].filter(Boolean).join(" | ")}.` : "";
+    if (!p) return "Not assessed yet. Ask about the learner's goals naturally when relevant." + notes;
     const sk = p.skills || {};
     return [
       `Overall level ${p.level}` + (Object.keys(sk).length ? ` (grammar/vocabulary ${sk.grammar || "?"}, listening ${sk.listening || "?"}, speaking ${sk.speaking || "?"}, writing ${sk.writing || "?"})` : ""),
@@ -44,9 +46,16 @@
       p.writingNotes ? `Writing feedback: ${p.writingNotes}` : "",
       p.minutes ? `Study time per day: ${p.minutes} min` : "",
       "Use examples from these goals, situations, work and interests, and keep working on the weak points.",
-    ].filter(Boolean).join(". ");
+    ].filter(Boolean).join(". ") + notes;
   }
   const save = (k) => store.set(k, S[k]);
+  // Learning log: everything the diagnosis needs (corrections, unclear words, hesitation, how the learner phrases things).
+  S.log = store.get("log", []);
+  function logEvent(type, data) {
+    S.log.push({ type, at: Date.now(), ...data });
+    if (S.log.length > 600) S.log = S.log.slice(-600);
+    save("log");
+  }
 
   let toastTimer;
   function toast(msg) {
@@ -126,17 +135,19 @@
 
   // Text to Speech with a device cache, so repeated sentences cost no credits.
   const TTS_MODEL = "eleven_flash_v2_5";
-  async function speak(text, speed = 1) {
+  // voiceId overrides the default voice (e.g. the learner's cloned voice). wait=true resolves when playback ends.
+  async function speak(text, speed = 1, voiceId = null, wait = false) {
     if (!text) return;
-    if (!hasKey() || !S.settings.voiceId) return speakFallback(text, speed);
-    const key = `${API}/__tts/${S.settings.voiceId}/${TTS_MODEL}/${speed}/${encodeURIComponent(text)}`;
+    const vid = voiceId || S.settings.voiceId;
+    if (!hasKey() || !vid) return speakFallback(text, speed, wait);
+    const key = `${API}/__tts/${vid}/${TTS_MODEL}/${speed}/${encodeURIComponent(text)}`;
     try {
       let blob;
       const cache = "caches" in window ? await caches.open("tts-v1") : null;
       const hit = cache && (await cache.match(key));
       if (hit) blob = await hit.blob();
       else {
-        const res = await el(`/v1/text-to-speech/${encodeURIComponent(S.settings.voiceId)}?output_format=mp3_44100_64`, {
+        const res = await el(`/v1/text-to-speech/${encodeURIComponent(vid)}?output_format=mp3_44100_64`, {
           method: "POST",
           headers: { "Content-Type": "application/json", Accept: "audio/mpeg" },
           body: JSON.stringify({ text, model_id: TTS_MODEL, voice_settings: { stability: 0.5, similarity_boost: 0.75, speed } }),
@@ -147,16 +158,20 @@
       if (player.src.startsWith("blob:")) URL.revokeObjectURL(player.src);
       player.src = URL.createObjectURL(blob);
       player.playbackRate = 1;
+      const ended = wait ? new Promise((r) => { player.onended = r; player.onerror = r; setTimeout(r, 30000); }) : null;
       await player.play();
+      if (ended) await ended;
     } catch (e) {
       toast(errText(e));
-      speakFallback(text, speed);
+      return speakFallback(text, speed, wait);
     }
   }
-  function speakFallback(text, speed) {
+  const speakMine = (text, speed = 1, wait = false) => speak(text, speed, S.settings.myVoiceId, wait);
+  function speakFallback(text, speed, wait) {
     try {
       const u = new SpeechSynthesisUtterance(text);
       u.lang = "en-US"; u.rate = speed;
+      if (wait) return new Promise((r) => { u.onend = r; u.onerror = r; setTimeout(r, 30000); speechSynthesis.cancel(); speechSynthesis.speak(u); });
       speechSynthesis.cancel(); speechSynthesis.speak(u);
     } catch {}
   }
@@ -202,6 +217,7 @@
         return ok ? "saved" : "already saved";
       },
       show_correction: ({ original, corrected, explanation }) => {
+        logEvent("fix", { src: feed.id === "talkFeed" ? "voz" : "chat", o: original, c: corrected, e: explanation });
         feed.insertAdjacentHTML("beforeend", `<div class="fix"><span class="label">Correção</span><span><s>${esc(original)}</s> → <b>${esc(corrected)}</b></span><span>${esc(explanation)}</span></div>`);
         scrollFeed(feed);
         return "shown";
@@ -257,16 +273,36 @@
       const scene = SCENES.find((s) => s.id === S.scene) || SCENES[0];
       const feed = $("talkFeed");
       feed.innerHTML = "";
+      const SPEED = { A1: 0.8, A2: 0.85, B1: 0.95, B2: 1, C1: 1 };
+      const useMine = $("myVoiceTalk")?.checked && S.settings.myVoiceId;
+      const turnStats = { listenAt: 0, latencies: [], fillers: 0, words: 0, turns: 0, ptWords: 0, waitingFirstVoice: false };
       voice = await EL.Conversation.startSession({
         useWakeLock: true,
         ...(await sessionAuth(false)),
+        overrides: { tts: { speed: SPEED[S.level] || 0.9, ...(useMine ? { voiceId: S.settings.myVoiceId } : {}) } },
+        // Hesitation: seconds from the moment the coach stops talking to the first sound of the learner's voice.
+        onVadScore: ({ vadScore }) => {
+          if (turnStats.waitingFirstVoice && vadScore > 0.6) {
+            turnStats.waitingFirstVoice = false;
+            const gap = (Date.now() - turnStats.listenAt) / 1000;
+            if (gap < 60) turnStats.latencies.push(Math.round(gap * 10) / 10);
+          }
+        },
         dynamicVariables: { mode: "conversation", level: S.level, scenario: scene.brief, first_message: scene.hello, known_words: knownWords(), instructions: "Voice conversation practice.", profile: profileSummary() },
         clientTools: clientTools(feed),
         onConnect: () => { voiceStarted = Date.now(); setOrb("listening", "Pode falar"); $("muteBtn").hidden = false; },
-        onModeChange: ({ mode }) => setOrb(mode, mode === "speaking" ? "Professor falando… (pode interromper)" : muted ? "Microfone silenciado" : "Ouvindo você"),
+        onModeChange: ({ mode }) => {
+          if (mode === "listening") { turnStats.listenAt = Date.now(); turnStats.waitingFirstVoice = true; }
+          setOrb(mode, mode === "speaking" ? "Professor falando… (pode interromper)" : muted ? "Microfone silenciado" : "Ouvindo você");
+        },
         onMessage: ({ message, source }) => {
           if (!message) return;
           feed.insertAdjacentHTML("beforeend", `<div class="bubble ${source === "user" ? "me" : "ai"}">${esc(message)}</div>`);
+          const bubble = feed.lastElementChild;
+          if (source === "user") {
+            const f = countFillers(message);
+            turnStats.turns++; turnStats.fillers += f.fillers; turnStats.words += f.words; turnStats.ptWords += f.pt;
+          } else if ($("subsPT").checked) subtitle(bubble, message);
           scrollFeed(feed);
         },
         onError: (msg) => toast("Erro na conversa: " + msg),
@@ -275,6 +311,10 @@
             const secs = Math.round((Date.now() - voiceStarted) / 1000);
             S.talkSeconds += secs; save("talkSeconds");
             if (secs >= 60) markDone("talk");
+            if (turnStats.turns) {
+              const L = turnStats.latencies, avg = L.length ? Math.round((L.reduce((a, b) => a + b, 0) / L.length) * 10) / 10 : null;
+              logEvent("fluency", { src: "voz", secs, turns: turnStats.turns, avgStart: avg, maxStart: L.length ? Math.max(...L) : null, fillersPerTurn: Math.round((turnStats.fillers / turnStats.turns) * 10) / 10, wordsPerTurn: Math.round(turnStats.words / turnStats.turns), ptWords: turnStats.ptWords });
+            }
           }
           voice = null; voiceStarted = 0; muted = false;
           $("muteBtn").hidden = true; $("muteBtn").textContent = "Silenciar microfone";
@@ -287,6 +327,36 @@
       toast(errText(e));
     } finally { starting = false; }
   });
+  // Hesitation markers in a transcript: "uh/um", repeated words ("I, I like") and Portuguese words.
+  const PT_WORDS = new Set(["não", "nao", "é", "tipo", "então", "entao", "porque", "que", "eu", "tá", "ta", "né", "ne", "mas", "pra", "com", "isso", "aqui", "fala", "sim", "ele", "ela", "uma", "um", "de", "do", "da", "pro"]);
+  function countFillers(text) {
+    const w = String(text).toLowerCase().replace(/[^a-zà-ú' -]+/g, " ").split(/\s+/).filter(Boolean);
+    let fillers = 0, pt = 0;
+    w.forEach((x, i) => {
+      if (/^(uh+|um+|er+|ah+|hmm+|eh+)$/.test(x)) fillers++;
+      else if (i && x === w[i - 1]) fillers++;
+      if (PT_WORDS.has(x) && !["de", "do", "um", "com"].includes(x) || /[ãõç]/.test(x)) pt++;
+    });
+    return { fillers, words: w.length, pt };
+  }
+  // Portuguese subtitles under each coach message (text agent, one short request per message).
+  const subsQueue = [];
+  let subsBusy = false;
+  function subtitle(bubble, text) { subsQueue.push({ bubble, text }); pumpSubs(); }
+  async function pumpSubs() {
+    if (subsBusy || !subsQueue.length) return;
+    subsBusy = true;
+    const { bubble, text } = subsQueue.shift();
+    const line = document.createElement("span"); line.className = "sub-pt"; line.textContent = "traduzindo…"; bubble.append(line);
+    try {
+      const t = await askAgentOnce("Translate the learner's message into natural Brazilian Portuguese. Reply with ONLY the translation, no quotes, no explanations. Do not call any tool.", text, { timeoutMs: 30000 });
+      line.textContent = t.trim();
+    } catch { line.textContent = ""; }
+    subsBusy = false; pumpSubs();
+  }
+  $("subsPT").checked = store.get("subsPT", true);
+  $("subsPT").addEventListener("change", () => store.set("subsPT", $("subsPT").checked));
+
   $("muteBtn").addEventListener("click", () => {
     if (!voice) return;
     muted = !muted; voice.setMicMuted(muted);
@@ -481,6 +551,7 @@
         return ok ? "saved" : "already saved";
       },
       show_correction: ({ original, corrected, explanation }) => {
+        logEvent("fix", { src: "chat", o: original, c: corrected, e: explanation });
         if (conv()) { pushMsg(conv(), { r: "fix", o: original, c: corrected, e: explanation }); if (convId === chatId) renderChat(); }
         return "shown";
       },
@@ -672,6 +743,10 @@
     const pts = status.reduce((a, s) => a + (s === "ok" ? 1 : s === "weak" ? 0.5 : 0), 0);
     return { pct: m ? Math.round((pts / m) * 100) : 0, target, status, heard: (j.text || "").trim() };
   }
+  function logPron(r, src) {
+    const bad = r.target.filter((w, i) => r.status[i] !== "ok");
+    logEvent("pron", { src, pct: r.pct, bad, weak: r.target.filter((w, i) => r.status[i] === "weak") });
+  }
   const diffHTML = (r) => r.target.map((w, x) => `<span class="${r.status[x]}">${esc(w)}</span>`).join(" ");
   const scoreColor = (pct) => (pct >= 85 ? "var(--good)" : pct >= 60 ? "var(--warn)" : "var(--bad)");
   function scorePron(j) {
@@ -680,6 +755,7 @@
     $("pronScore").textContent = r.pct + "%";
     $("pronScore").style.color = scoreColor(r.pct);
     $("pronDiff").innerHTML = diffHTML(r);
+    logPron(r, "pronúncia");
     if (r.pct >= 85) markDone("pron");
   }
 
@@ -819,22 +895,28 @@
       say("Procurando seu professor no ElevenLabs…");
       const list = await (await el(`/v1/convai/agents?search=${encodeURIComponent(C.name)}&page_size=20`)).json();
       let agent = (list.agents || []).find((a) => a.name === C.name);
+      const created = !agent;
       if (!agent) {
-        say("Criando as funções do app…");
+        say("Preparando as funções do app…");
+        // Reuse tools created by an earlier attempt, so a retry never duplicates them.
+        let existing = [];
+        try { existing = (await (await el("/v1/convai/tools")).json()).tools || []; } catch {}
         const toolIds = [];
         for (const t of C.tools) {
+          const found = existing.find((x) => x.tool_config?.name === t.name && x.tool_config?.type === "client");
+          if (found) { toolIds.push(found.id); continue; }
           const r = await (await el("/v1/convai/tools", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tool_config: t }) })).json();
           toolIds.push(r.id);
         }
         say("Criando o professor…");
-        const tts = { model_id: "eleven_flash_v2_5", ...($("sVoice").value ? { voice_id: $("sVoice").value } : {}) };
+        const tts = { model_id: "eleven_flash_v2", ...($("sVoice").value ? { voice_id: $("sVoice").value } : {}) };
         const full = {
           name: C.name, tags: ["speak-lab"],
           conversation_config: {
             agent: { first_message: C.firstMessage, language: "en", dynamic_variables: { dynamic_variable_placeholders: C.placeholders }, prompt: { prompt: C.prompt, llm: C.llm, temperature: 0.5, tool_ids: toolIds } },
-            tts, conversation: { max_duration_seconds: 900 },
+            tts: { ...tts, speed: C.ttsSpeed }, conversation: { max_duration_seconds: 900 },
           },
-          platform_settings: { auth: { enable_auth: true }, overrides: { conversation_config_override: { conversation: { text_only: true } } } },
+          platform_settings: { auth: { enable_auth: true }, overrides: { conversation_config_override: { conversation: { text_only: true }, tts: { voice_id: true, speed: true } } } },
         };
         // If the API rejects an optional part, retry without it (most specific first).
         const variants = [
@@ -851,6 +933,7 @@
       }
       S.settings.agentId = agent.agent_id;
       $("sAgent").value = agent.agent_id;
+      if (created) S.settings.agentVersion = C.version; else { S.settings.agentVersion = S.settings.agentVersion || 1; save("settings"); await updateAgentIfNeeded(); }
       const opt = $("sVoice").selectedOptions[0];
       if (opt?.value) { S.settings.voiceId = opt.value; S.settings.voiceName = opt.textContent; }
       save("settings"); refreshSetupBanner();
@@ -863,6 +946,27 @@
     } finally { $("sAuto").disabled = false; }
   }
   $("sAuto").addEventListener("click", setupAgent);
+
+  // Keep the learner's agent in sync with app updates (new prompt, speed, override permissions).
+  function agentPatchBody(toolIds) {
+    const C = window.AGENT_CONFIG;
+    return {
+      conversation_config: { agent: { prompt: { prompt: C.prompt, llm: C.llm, temperature: 0.5, tool_ids: toolIds } }, tts: { speed: C.ttsSpeed } },
+      platform_settings: { overrides: { conversation_config_override: { conversation: { text_only: true }, tts: { voice_id: true, speed: true } } } },
+    };
+  }
+  async function updateAgentIfNeeded() {
+    const C = window.AGENT_CONFIG;
+    if (!hasKey() || !S.settings.agentId || (S.settings.agentVersion || 1) >= C.version) return;
+    try {
+      const a = await (await el(`/v1/convai/agents/${encodeURIComponent(S.settings.agentId)}`)).json();
+      if (a.name !== C.name) return; // never touch an agent the app did not create
+      const toolIds = a.conversation_config?.agent?.prompt?.tool_ids || [];
+      await el(`/v1/convai/agents/${encodeURIComponent(S.settings.agentId)}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(agentPatchBody(toolIds)) });
+      S.settings.agentVersion = C.version; save("settings");
+      toast("Seu professor foi atualizado");
+    } catch (e) { console.warn("agent update failed", e); }
+  }
 
   $("sLoadVoices").addEventListener("click", async () => {
     S.settings.apiKey = $("sKey").value.trim();
@@ -929,10 +1033,12 @@
   window.SL = {
     S, store, save, $, esc, toast, errText, speak, scribe, startRecording, alignScore, diffHTML, scoreColor,
     addWord, markDone, showTab, md, askAgentOnce, parseJSON, hasKey, profileSummary,
+    speakMine, logEvent, logPron, countFillers, el, saveSettings: () => save("settings"),
     setProfile(p) { S.profile = p; save("profile"); if (p?.level) { S.level = p.level; save("level"); $("level").value = p.level; } renderScenes(); renderPlan(); renderPronTopics(); nextPron(); },
     renderPlan, onHome: null,
   };
   showTab(location.hash.slice(1) || "home");
+  setTimeout(updateAgentIfNeeded, 1500);
   // iOS keyboard: keep the chat composer on top of the keyboard and hide the tab bar while typing.
   const vv = window.visualViewport;
   function onViewport() {

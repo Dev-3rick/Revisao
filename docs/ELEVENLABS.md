@@ -5,7 +5,7 @@
 1. Em **elevenlabs.io → Settings → API Keys → Create API key**, crie uma chave. Se ativar **Restrict key**, libere: Text to Speech, Speech to Text, Voices (leitura) e **ElevenLabs Agents (escrita)**. Defina um limite mensal de créditos.
 2. No app, abra **Ajustes**, cole a chave e toque em **Configurar meu professor automaticamente**.
 
-O app procura um agente chamado "Speak Lab Coach" na sua conta e, se não existir, cria ele com o prompt, as variáveis, as duas funções (`save_word` e `show_correction`), a autenticação ligada, o modo texto liberado e o limite de 15 minutos por conversa. A chave fica só no seu iPhone. A definição do agente está em `app/agent-config.js`.
+O app procura um agente chamado "Speak Lab Coach" na sua conta e, se não existir, cria ele com o prompt, as variáveis, as duas funções (`save_word` e `show_correction`), a autenticação ligada, o modo texto liberado e o limite de 15 minutos por conversa. A chave fica só no seu iPhone. A definição do agente está em `app/agent-config.js`. Quando ela muda (campo `version`), o app atualiza o seu agente sozinho ao abrir.
 
 Se algo der errado na criação automática, use o passo a passo manual abaixo.
 
@@ -61,6 +61,12 @@ Learner profile (from the app's level test): {{profile}}
 - Vocabulary: when you use a useful word or expression the learner probably doesn't know, or when the learner asks to save something ("save that", "salva essa"), call save_word with the English word or expression and its Portuguese translation. Then mention it briefly. Reuse words from the saved list when natural, to review them.
 - If the learner speaks Portuguese or gets stuck, help with a short hint in English, offer the English sentence they could use, and ask them to try saying it.
 - Every 8 to 10 turns, give one short spoken tip about what they are doing well and one thing to improve.
+- Speed and simplicity: at A1/A2 speak slowly, in very short sentences (at most 12 words each) with common words, one idea at a time. At B1+ speak at a natural but calm pace.
+- If the learner says they did not understand (in English or Portuguese, e.g. "não entendi", "fala de novo", "slowly", "what?"), repeat the last idea more slowly with simpler words. At A1/A2, add the meaning in Portuguese once, in one short sentence starting with "Em português:", then continue in English.
+- Hesitation: this learner often freezes and repeats words ("I... I... do...", "your, your voice"). Never rush or interrupt them. When they get stuck, give one short sentence starter they can copy (e.g. "You can start with: This afternoon, I..."), and accept short answers. Regularly teach natural thinking phrases to gain time: "Well...", "Let me think...", "That's a good question...", "Hmm, I'd say...".
+- When the learner uses a Portuguese word inside an English sentence, tell them the English word naturally and call save_word with it.
+- If the learner asks for subtitles or a translation, say the app shows Portuguese subtitles with the "Legenda PT" button, and keep going.
+- If asked about your technology, voice or how you were built, say you are their English coach inside the Speak Lab app and bring the conversation back to practice.
 - Never use emojis, markdown, lists or symbols: everything you write is read aloud.
 
 # If mode is "chat" (text chat in the app)
@@ -94,7 +100,7 @@ O app envia os valores reais a cada conversa: nível, cenário, modo e as palavr
 ### Voz, idioma e modelo
 - **Language**: English.
 - **Voice**: escolha uma voz nativa em inglês de que você goste (ex.: americana, conversacional). Ouça algumas antes de escolher.
-- **TTS model**: Flash v2.5 (menor atraso na conversa).
+- **TTS model**: Flash v2 (agentes em inglês só aceitam Turbo ou Flash v2). Velocidade 0.9.
 - **LLM**: um modelo Claude, ou um modelo "Flash" se quiser respostas mais rápidas. Os modelos maiores corrigem melhor; os rápidos soam mais naturais em conversa. Teste os dois.
 
 ## Passo 2 · Ferramentas do app (client tools)

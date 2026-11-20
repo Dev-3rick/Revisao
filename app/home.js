@@ -53,6 +53,7 @@ Rules: "sounds_like" is an approximation written with Portuguese spelling (e.g. 
       const raw = await SL.askAgentOnce(`${QMODES[qMode].task}\n${SCHEMA}`, q);
       const r = SL.parseJSON(raw);
       const item = { q, mode: qMode, r: r && r.answer ? r : null, text: r && r.answer ? "" : raw, at: Date.now() };
+      if (item.r && qMode === "check" && item.r.verdict && item.r.verdict !== "correct") SL.logEvent("fix", { src: "dúvida rápida", o: q, c: item.r.answer, e: item.r.explanation || "" });
       recent = [item, ...recent.filter((x) => x.q !== q)].slice(0, 30);
       SL.store.set("quick", recent);
       renderResult(item); renderRecent();
@@ -66,6 +67,7 @@ Rules: "sounds_like" is an approximation written with Portuguese spelling (e.g. 
   $("qInput").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); ask(); } });
 
   // ----- result card -----
+  const inl = (t) => esc(t).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/(^|[^*])\*([^*]+)\*/g, "$1<em>$2</em>");
   const VERDICT = { correct: ["ok", "Está correto"], almost: ["almost", "Quase: pequenos ajustes"], wrong: ["no", "Precisa ajustar"] };
   let current = null;
   function renderResult(item) {
@@ -80,14 +82,15 @@ Rules: "sounds_like" is an approximation written with Portuguese spelling (e.g. 
       <div class="row">
         <button class="btn" data-q="play">Ouvir</button>
         <button class="btn" data-q="slow">Devagar</button>
+        ${SL.S.settings.myVoiceId ? `<button class="btn" data-q="mine">Minha voz</button>` : ""}
         <button class="btn primary" data-q="practice">Praticar</button>
         ${r.save?.en ? `<button class="btn" data-q="save">+ Salvar</button>` : ""}
       </div>
       <div id="qPractice" hidden></div>
       ${r.ipa || r.sounds_like ? `<div class="q-pron">${r.ipa ? `<span class="ipa">${esc(r.ipa)}</span>` : ""}${r.sounds_like ? `<span>soa como <b>${esc(r.sounds_like)}</b></span>` : ""}</div>` : ""}
-      ${r.tips ? `<p class="small">${esc(r.tips)}</p>` : ""}
+      ${r.tips ? `<p class="small">${inl(r.tips)}</p>` : ""}
       ${alts.length ? `<div class="q-alts">${alts.map((a, i) => `<div class="q-alt"><span class="tone">${esc(a.tone || "")}</span><span class="grow">${esc(a.text)}</span><button class="mini-play" data-alt="${i}" aria-label="Ouvir alternativa">▶</button></div>`).join("")}</div>` : ""}
-      ${r.explanation ? `<p class="q-expl">${esc(r.explanation)}</p>` : ""}
+      ${r.explanation ? `<p class="q-expl">${inl(r.explanation)}</p>` : ""}
       ${r.example?.en ? `<div class="q-ex"><button class="mini-play" data-q="ex" aria-label="Ouvir exemplo">▶</button><div><p>${esc(r.example.en)}</p><p class="small muted">${esc(r.example.pt || "")}</p></div></div>` : ""}
       <button class="link small" data-q="more">Perguntar mais no Chat</button>
     </div>`;
@@ -102,6 +105,7 @@ Rules: "sounds_like" is an approximation written with Portuguese spelling (e.g. 
     const act = b.dataset.q;
     if (act === "play") speak(r.answer, 1);
     if (act === "slow") speak(r.answer, 0.8);
+    if (act === "mine") SL.speakMine(r.answer, 0.95);
     if (act === "ex") speak(r.example.en);
     if (act === "save") { if (SL.addWord(r.save.en, r.save.pt)) { b.textContent = "Salvo"; b.disabled = true; } else toast("Já está no vocabulário."); }
     if (act === "more") { SL.showTab("chat"); const i = $("chatInput"); i.value = `Sobre "${r.answer}": `; i.focus(); }
@@ -118,6 +122,7 @@ Rules: "sounds_like" is an approximation written with Portuguese spelling (e.g. 
         box.hidden = false; box.innerHTML = `<p class="small muted">analisando sua pronúncia…</p>`;
         try {
           const res = SL.alignScore(target, await SL.scribe(blob, "en"));
+          SL.logPron(res, "dúvida rápida");
           box.innerHTML = `<div class="row between"><p class="diff grow">${SL.diffHTML(res)}</p><span class="score" style="color:${SL.scoreColor(res.pct)}">${res.pct}%</span></div>
             <p class="small muted">${res.pct >= 85 ? "Ótimo! Soou claro." : "Ouça devagar e repita focando nas palavras em laranja e vermelho."}</p>`;
           if (res.pct >= 85) SL.markDone("pron");
