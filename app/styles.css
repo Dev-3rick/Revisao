@@ -363,3 +363,9 @@ body.in-assess { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 24px); 
 .starters-list { display: flex; flex-wrap: wrap; gap: 6px; }
 .starters-list button { border: 1px solid var(--line); background: var(--surface); border-radius: 99px; padding: 8px 12px; min-height: 40px; font-size: 0.88rem; color: var(--fg); }
 @media (max-width: 380px) { .metrics { grid-template-columns: 1fr 1fr; } .style-row { grid-template-columns: 1fr auto; } }
+.repair-box { width: 100%; }
+.repair-box summary { font-size: 0.86rem; font-weight: 600; color: var(--muted); text-align: center; padding: 6px 0; cursor: pointer; }
+.repair { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px; }
+.repair button { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 8px 10px; text-align: left; display: flex; flex-direction: column; min-height: 48px; color: var(--fg); }
+.repair button b { font-size: 0.9rem; }
+.repair button span { font-size: 0.76rem; color: var(--muted); }

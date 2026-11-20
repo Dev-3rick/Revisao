@@ -21,8 +21,8 @@
   };
   const S = {
     settings: store.get("settings", { agentId: "", apiKey: "", voiceId: "", voiceName: "" }),
-    level: store.get("level", "A2"),
-    scene: store.get("scene", "free"),
+    level: store.get("level", "A1"),
+    scene: store.get("scene", "basics"),
     vocab: store.get("vocab", []),
     days: store.get("days", {}),
     talkSeconds: store.get("talkSeconds", 0),
@@ -235,6 +235,7 @@
 
   // ---------------- TALK (voice agent) ----------------
   const SCENES = [
+    { id: "basics", name: "Primeiros passos", brief: "very basic personal questions, one at a time: name, city, work or study, family, food the learner likes, what they do today", hello: "Hi! What is your name?" },
     { id: "free", name: "Papo livre", brief: "a friendly casual chat about the learner's day, interests and plans", hello: "Hi! How's your day going so far?" },
     { id: "interview", name: "Entrevista", brief: "a job interview for a software position; you are the interviewer", hello: "Hi, thanks for coming in. Could you start by telling me a little about yourself?" },
     { id: "restaurant", name: "Restaurante", brief: "a restaurant; you are the waiter taking the order", hello: "Good evening! Welcome in. Table for how many?" },
@@ -243,6 +244,12 @@
     { id: "doctor", name: "Médico", brief: "a doctor's appointment; you are the doctor", hello: "Hello, please have a seat. What brings you in today?" },
     { id: "debate", name: "Opinião", brief: "a friendly debate where you ask for the learner's opinion on everyday topics and gently challenge it", hello: "Here's a question for you: is it better to work from home or from an office? What do you think?" },
   ];
+  // Very simple first lines for beginners (the regular ones use idioms like "so far").
+  const A1_HELLO = {
+    basics: "Hi! What is your name?", free: "Hi! How are you today?", interview: "Hello! What is your name?",
+    restaurant: "Hello! Welcome! A table for one?", travel: "Hello! Your passport, please.", meeting: "Hi! How is your work today?",
+    doctor: "Hello! How are you today?", debate: "Hi! Do you like coffee or tea?",
+  };
   // Scenarios that match the learner's goals come first, marked with a star.
   const GOAL_SCENES = { work: ["meeting", "interview"], interview: ["interview"], travel: ["travel", "restaurant"], media: ["free", "debate"], people: ["free", "debate"], exams: ["debate"], abroad: ["doctor", "restaurant", "travel"] };
   function recommendedScenes() { return new Set((S.profile?.goalIds || []).flatMap((g) => GOAL_SCENES[g] || [])); }
@@ -288,7 +295,7 @@
             if (gap < 60) turnStats.latencies.push(Math.round(gap * 10) / 10);
           }
         },
-        dynamicVariables: { mode: "conversation", level: S.level, scenario: scene.brief, first_message: scene.hello, known_words: knownWords(), instructions: "Voice conversation practice.", profile: profileSummary() },
+        dynamicVariables: { mode: "conversation", level: S.level, scenario: scene.brief, first_message: S.level === "A1" ? (A1_HELLO[scene.id] || scene.hello) : scene.hello, known_words: knownWords(), instructions: "Voice conversation practice.", profile: profileSummary() },
         clientTools: clientTools(feed),
         onConnect: () => { voiceStarted = Date.now(); setOrb("listening", "Pode falar"); $("muteBtn").hidden = false; },
         onModeChange: ({ mode }) => {
@@ -354,6 +361,10 @@
     } catch { line.textContent = ""; }
     subsBusy = false; pumpSubs();
   }
+  // "Socorro" phrases: what to say instead of freezing or switching to Portuguese.
+  const REPAIR = [["Sorry?", "Como?"], ["Can you repeat, please?", "Pode repetir, por favor?"], ["Slowly, please.", "Devagar, por favor."], ["What does it mean?", "O que significa?"], ["I don't understand.", "Não entendi."], ["How do I say … in English?", "Como digo … em inglês?"], ["Give me a second.", "Me dá um segundo."]];
+  $("repair").innerHTML = REPAIR.map(([en, pt], i) => `<button type="button" data-r="${i}"><b>${esc(en)}</b><span>${esc(pt)}</span></button>`).join("");
+  $("repair").addEventListener("click", (e) => { const b = e.target.closest("[data-r]"); if (b) speak(REPAIR[+b.dataset.r][0].replace("…", "this"), 0.85); });
   $("subsPT").checked = store.get("subsPT", true);
   $("subsPT").addEventListener("change", () => store.set("subsPT", $("subsPT").checked));
 
