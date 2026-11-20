@@ -26,7 +26,26 @@
     vocab: store.get("vocab", []),
     days: store.get("days", {}),
     talkSeconds: store.get("talkSeconds", 0),
+    profile: store.get("profile", null), // set by the level test (assess.js)
   };
+  // One-paragraph learner profile sent to the agent in every session.
+  function profileSummary() {
+    const p = S.profile;
+    if (!p) return "Not assessed yet. Ask about the learner's goals naturally when relevant.";
+    const sk = p.skills || {};
+    return [
+      `Overall level ${p.level}` + (Object.keys(sk).length ? ` (grammar/vocabulary ${sk.grammar || "?"}, listening ${sk.listening || "?"}, speaking ${sk.speaking || "?"}, writing ${sk.writing || "?"})` : ""),
+      p.goals?.length ? `Goals: ${p.goals.join(", ")}` : "",
+      p.situations?.length ? `Daily situations: ${p.situations.join(", ")}` : "",
+      p.job ? `Work/area: ${p.job}` : "",
+      p.interests?.length ? `Interests: ${p.interests.join(", ")}` : "",
+      p.struggles?.length ? `Says it struggles with: ${p.struggles.join(", ")}` : "",
+      p.weakTopics?.length ? `Grammar topics missed in the test: ${p.weakTopics.join(", ")}` : "",
+      p.writingNotes ? `Writing feedback: ${p.writingNotes}` : "",
+      p.minutes ? `Study time per day: ${p.minutes} min` : "",
+      "Use examples from these goals, situations, work and interests, and keep working on the weak points.",
+    ].filter(Boolean).join(". ");
+  }
   const save = (k) => store.set(k, S[k]);
 
   let toastTimer;
@@ -36,17 +55,19 @@
   }
 
   // ---------------- navigation ----------------
-  const TABS = ["talk", "chat", "pron", "vocab", "plan", "settings"];
+  const TABS = ["home", "talk", "chat", "pron", "vocab", "settings", "assess"];
   function showTab(name) {
     if (name === "ask") name = "chat";
-    if (!TABS.includes(name)) name = "talk";
+    if (name === "plan") name = "home";
+    if (!TABS.includes(name)) name = "home";
     document.querySelectorAll("#tabbar button").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.tab === name)));
     TABS.forEach((t) => ($("view-" + t).hidden = t !== name));
     if (location.hash !== "#" + name) history.replaceState(null, "", "#" + name);
     if (name !== "chat") endChatSession();
     document.body.classList.toggle("in-chat", name === "chat");
     if (name === "vocab") renderFlash();
-    if (name === "plan") renderPlan();
+    if (name === "home") { renderPlan(); window.SL?.onHome?.(); }
+    document.body.classList.toggle("in-assess", name === "assess");
     window.scrollTo(0, 0);
   }
   $("tabbar").addEventListener("click", (e) => { const b = e.target.closest("[data-tab]"); if (b) showTab(b.dataset.tab); });
@@ -206,8 +227,13 @@
     { id: "doctor", name: "Médico", brief: "a doctor's appointment; you are the doctor", hello: "Hello, please have a seat. What brings you in today?" },
     { id: "debate", name: "Opinião", brief: "a friendly debate where you ask for the learner's opinion on everyday topics and gently challenge it", hello: "Here's a question for you: is it better to work from home or from an office? What do you think?" },
   ];
+  // Scenarios that match the learner's goals come first, marked with a star.
+  const GOAL_SCENES = { work: ["meeting", "interview"], interview: ["interview"], travel: ["travel", "restaurant"], media: ["free", "debate"], people: ["free", "debate"], exams: ["debate"], abroad: ["doctor", "restaurant", "travel"] };
+  function recommendedScenes() { return new Set((S.profile?.goalIds || []).flatMap((g) => GOAL_SCENES[g] || [])); }
   function renderScenes() {
-    $("scenes").innerHTML = SCENES.map((s) => `<button class="chip" data-s="${s.id}" aria-pressed="${s.id === S.scene}">${esc(s.name)}</button>`).join("");
+    const rec = recommendedScenes();
+    const list = [...SCENES].sort((a, b) => rec.has(b.id) - rec.has(a.id));
+    $("scenes").innerHTML = list.map((s) => `<button class="chip" data-s="${s.id}" aria-pressed="${s.id === S.scene}">${rec.has(s.id) ? "★ " : ""}${esc(s.name)}</button>`).join("");
   }
   $("scenes").addEventListener("click", (e) => {
     const b = e.target.closest("[data-s]"); if (!b || voice) return;
@@ -234,7 +260,7 @@
       voice = await EL.Conversation.startSession({
         useWakeLock: true,
         ...(await sessionAuth(false)),
-        dynamicVariables: { mode: "conversation", level: S.level, scenario: scene.brief, first_message: scene.hello, known_words: knownWords(), instructions: "Voice conversation practice." },
+        dynamicVariables: { mode: "conversation", level: S.level, scenario: scene.brief, first_message: scene.hello, known_words: knownWords(), instructions: "Voice conversation practice.", profile: profileSummary() },
         clientTools: clientTools(feed),
         onConnect: () => { voiceStarted = Date.now(); setOrb("listening", "Pode falar"); $("muteBtn").hidden = false; },
         onModeChange: ({ mode }) => setOrb(mode, mode === "speaking" ? "Professor falando… (pode interromper)" : muted ? "Microfone silenciado" : "Ouvindo você"),
@@ -471,7 +497,7 @@
       const session = await EL.Conversation.startSession({
         ...(await sessionAuth(true)),
         textOnly: true,
-        dynamicVariables: { mode: "chat", level: S.level, scenario: mode.name, instructions: mode.prompt, first_message: GREETING, known_words: knownWords() },
+        dynamicVariables: { mode: "chat", level: S.level, scenario: mode.name, instructions: mode.prompt, first_message: GREETING, known_words: knownWords(), profile: profileSummary() },
         clientTools: chatTools(conv.id),
         onAgentChatResponsePart: ({ text, type }) => {
           if (!sent || !busy) return;
@@ -627,8 +653,9 @@
   }
 
   const norm = (s) => String(s).toLowerCase().replace(/[’']/g, "'").replace(/[^a-z0-9' -]+/g, " ").replace(/-/g, " ").split(/\s+/).filter(Boolean);
-  function scorePron(j) {
-    const target = norm(pronItem.en);
+  // Compare a target sentence with a Scribe transcript: which words were heard, which were unclear.
+  function alignScore(targetText, j) {
+    const target = norm(targetText);
     const heard = [];
     (j.words || []).filter((w) => w.type === "word").forEach((w) => norm(w.text).forEach((t) => heard.push({ t, lp: typeof w.logprob === "number" ? w.logprob : 0 })));
     if (!heard.length) norm(j.text || "").forEach((t) => heard.push({ t, lp: 0 }));
@@ -643,12 +670,17 @@
       else if (dp[i + 1][k] >= dp[i][k + 1]) i++; else k++;
     }
     const pts = status.reduce((a, s) => a + (s === "ok" ? 1 : s === "weak" ? 0.5 : 0), 0);
-    const pct = m ? Math.round((pts / m) * 100) : 0;
-    $("pronHeard").textContent = j.text?.trim() || "(nada reconhecido)";
-    $("pronScore").textContent = pct + "%";
-    $("pronScore").style.color = pct >= 85 ? "var(--good)" : pct >= 60 ? "var(--warn)" : "var(--bad)";
-    $("pronDiff").innerHTML = target.map((w, x) => `<span class="${status[x]}">${esc(w)}</span>`).join(" ");
-    if (pct >= 85) markDone("pron");
+    return { pct: m ? Math.round((pts / m) * 100) : 0, target, status, heard: (j.text || "").trim() };
+  }
+  const diffHTML = (r) => r.target.map((w, x) => `<span class="${r.status[x]}">${esc(w)}</span>`).join(" ");
+  const scoreColor = (pct) => (pct >= 85 ? "var(--good)" : pct >= 60 ? "var(--warn)" : "var(--bad)");
+  function scorePron(j) {
+    const r = alignScore(pronItem.en, j);
+    $("pronHeard").textContent = r.heard || "(nada reconhecido)";
+    $("pronScore").textContent = r.pct + "%";
+    $("pronScore").style.color = scoreColor(r.pct);
+    $("pronDiff").innerHTML = diffHTML(r);
+    if (r.pct >= 85) markDone("pron");
   }
 
   // ---------------- VOCAB UI ----------------
@@ -707,9 +739,30 @@
     { id: "vocab", t: "Revisar palavras", d: "Passe pelos cartões do dia.", min: 5 },
     { id: "pron", t: "Pronúncia", d: "Uma frase com 85% ou mais.", min: 10 },
     { id: "talk", t: "Conversar por voz", d: "Pelo menos 1 minuto; o ideal são 10.", min: 10 },
-    { id: "ask", t: "Tirar 1 dúvida", d: "O que travou na conversa vira pergunta.", min: 5 },
+    { id: "ask", t: "Tirar 1 dúvida", d: "Use a Dúvida rápida ou o Chat no que travou.", min: 5 },
     { id: "input", t: "Ouvir inglês real", d: "Vídeo, podcast ou série com legenda em inglês.", min: 15 },
   ];
+  // Daily routine sized to the learner's time and weighted toward weak skills (from the level test).
+  function routine() {
+    const p = S.profile;
+    if (!p) return ROUTINE;
+    const w = { vocab: 1, pron: 1.5, talk: 2, ask: 1, input: 2.5 };
+    const weak = p.weakSkills || [];
+    if (weak.includes("listening")) w.input += 1.5;
+    if (weak.includes("speaking")) { w.talk += 1; w.pron += 1; }
+    if (weak.includes("grammar") || weak.includes("writing")) w.ask += 1;
+    const total = p.minutes || 30;
+    // Keep as many activities as fit in 5-minute blocks (talking always stays), then share the time by weight.
+    const slots = Math.max(1, Math.floor(total / 5));
+    const keep = new Set(Object.keys(w).sort((a, b) => (b === "talk") - (a === "talk") || w[b] - w[a]).slice(0, Math.min(5, slots)));
+    const items = ROUTINE.filter((r) => keep.has(r.id));
+    const sum = items.reduce((a, r) => a + w[r.id], 0);
+    const mins = items.map((r) => 5 + 5 * Math.floor(((slots - items.length) * w[r.id]) / sum));
+    let left = slots * 5 - mins.reduce((a, b) => a + b, 0);
+    [...items.keys()].sort((a, b) => w[items[b].id] - w[items[a].id]).forEach((i) => { if (left >= 5) { mins[i] += 5; left -= 5; } });
+    const isFocus = (id) => (id === "input" && weak.includes("listening")) || ((id === "talk" || id === "pron") && weak.includes("speaking")) || (id === "ask" && (weak.includes("grammar") || weak.includes("writing")));
+    return items.map((r, i) => ({ ...r, min: mins[i], focus: isFocus(r.id) }));
+  }
   function markDone(id) {
     const k = dayKey(); const set = new Set(S.days[k] || []);
     if (set.has(id)) return;
@@ -725,7 +778,7 @@
   function renderPlan() {
     const done = new Set(S.days[dayKey()] || []);
     $("today").textContent = new Date().toLocaleDateString("pt-BR", { weekday: "short", day: "numeric", month: "short" });
-    $("checks").innerHTML = ROUTINE.map((r) => `<label class="check"><input type="checkbox" id="c-${r.id}" data-c="${r.id}" ${done.has(r.id) ? "checked" : ""}><span><span class="t">${esc(r.t)}</span><br><span class="small muted">${esc(r.d)}</span></span><span class="mins">${r.min} min</span></label>`).join("");
+    $("checks").innerHTML = routine().map((r) => `<label class="check"><input type="checkbox" id="c-${r.id}" data-c="${r.id}" ${done.has(r.id) ? "checked" : ""}><span><span class="t">${esc(r.t)}${r.focus ? ' <span class="focus-tag">foco</span>' : ""}</span><br><span class="small muted">${esc(r.d)}</span></span><span class="mins">${r.min} min</span></label>`).join("");
     const studied = (d) => (S.days[dayKey(d)] || []).length > 0;
     let streak = 0; const d = new Date();
     if (!studied(d)) d.setDate(d.getDate() - 1);
@@ -787,7 +840,43 @@
   // ---------------- boot ----------------
   function renderAll() { renderVocab(); renderFlash(); renderPlan(); renderChat(); }
   renderScenes(); renderPronTopics(); nextPron(); fillSettings(); refreshSetupBanner(); renderAll();
-  showTab(location.hash.slice(1) || "talk");
+  // Shared helpers for the Home (quick help) and level-test modules.
+  async function askAgentOnce(instructions, text, { timeoutMs = 60000 } = {}) {
+    if (!S.settings.agentId) throw Object.assign(new Error("Configure o ID do agente em Ajustes."), { code: "no_agent" });
+    if (!EL?.Conversation) throw new Error("Não consegui carregar o ElevenLabs. Verifique a internet.");
+    let session = null, sent = false, timer;
+    try {
+      return await new Promise(async (resolve, reject) => {
+        timer = setTimeout(() => reject(new Error("O professor demorou para responder. Tente de novo.")), timeoutMs);
+        try {
+          session = await EL.Conversation.startSession({
+            ...(await sessionAuth(true)),
+            textOnly: true,
+            dynamicVariables: { mode: "chat", level: S.level, scenario: "quick help", instructions, first_message: "Ready.", known_words: knownWords(), profile: profileSummary() },
+            clientTools: { save_word: ({ word, translation }) => (addWord(word, translation, true) ? "saved" : "already saved"), show_correction: () => "shown" },
+            onMessage: ({ message, source }) => { if (sent && source === "ai" && message) resolve(message); },
+            onDisconnect: () => { if (sent) reject(new Error("A conexão foi encerrada.")); },
+          });
+          await new Promise((r) => setTimeout(r, 400)); // let the greeting pass
+          sent = true;
+          session.sendUserMessage(text);
+        } catch (e) { reject(e); }
+      });
+    } finally { clearTimeout(timer); session?.endSession().catch(() => {}); }
+  }
+  function parseJSON(text) {
+    const t = String(text || "").replace(/```(?:json)?/g, "");
+    const a = t.indexOf("{"), b = t.lastIndexOf("}");
+    if (a < 0 || b <= a) return null;
+    try { return JSON.parse(t.slice(a, b + 1)); } catch { return null; }
+  }
+  window.SL = {
+    S, store, save, $, esc, toast, errText, speak, scribe, startRecording, alignScore, diffHTML, scoreColor,
+    addWord, markDone, showTab, md, askAgentOnce, parseJSON, hasKey, profileSummary,
+    setProfile(p) { S.profile = p; save("profile"); if (p?.level) { S.level = p.level; save("level"); $("level").value = p.level; } renderScenes(); renderPlan(); renderPronTopics(); nextPron(); },
+    renderPlan, onHome: null,
+  };
+  showTab(location.hash.slice(1) || "home");
   // iOS keyboard: keep the chat composer on top of the keyboard and hide the tab bar while typing.
   const vv = window.visualViewport;
   function onViewport() {

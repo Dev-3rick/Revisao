@@ -9,6 +9,7 @@ Tempo: cerca de 15 minutos, uma vez só. No fim você terá dois valores para co
 | Conversa por voz | **Agents** (voz, WebRTC) | Ouve, pensa e responde em tempo real, e você pode interromper como numa conversa de verdade. |
 | Correções e salvar palavras | **Client tools** do agente | O professor chama funções do app: mostra a correção na tela e salva palavras no seu vocabulário. |
 | Chat (estilo Claude) | **Agents** em modo texto | O mesmo agente por escrito, com 7 modos de estudo. As respostas aparecem enquanto são escritas e as conversas ficam salvas. |
+| Dúvida rápida e teste de nível | **Agents** em modo texto | Uma pergunta por vez, resposta em JSON que vira um cartão no app; a escrita do teste é avaliada pelo agente. |
 | Ouvir frases e palavras | **Text to Speech** (Flash v2.5) | Voz natural. Cada frase fica guardada no aparelho, então repetir não gasta crédito. |
 | Avaliar pronúncia | **Speech to Text** (Scribe) | Transcreve sua fala com a confiança de cada palavra, para marcar o que saiu pouco claro. |
 
@@ -34,6 +35,11 @@ Learner level (CEFR): {{level}}
 Current mode: {{mode}}
 Scenario: {{scenario}}
 Words the learner already saved: {{known_words}}
+Learner profile (from the app's level test): {{profile}}
+
+# Personalisation
+- Use the profile in every answer: pick examples, scenarios and vocabulary from the learner's goals, daily situations, work and interests.
+- Give extra attention to the weak skills and the grammar topics listed in the profile, without turning every turn into a lesson.
 
 # If mode is "conversation" (voice)
 - Speak natural spoken English adapted to {{level}}. A1/A2: short, simple sentences and common words, speak a bit slower. B1/B2: natural everyday English with some idioms. C1: fully natural, fast, idiomatic.
@@ -68,6 +74,7 @@ O painel pede valores de teste para as variáveis do prompt. Use:
 | `first_message` | `Hi! How's your day going so far?` |
 | `known_words` | `none yet` |
 | `instructions` | `General English tutor. Answer in Brazilian Portuguese.` |
+| `profile` | `Not assessed yet.` |
 
 O app envia os valores reais a cada conversa: nível, cenário, modo e as palavras que você já salvou.
 
