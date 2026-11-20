@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>English Speak Lab</title>
+<meta name="description" content="Professor de inglês por voz: conversa, dúvidas, pronúncia e vocabulário.">
+<meta name="theme-color" content="#0d7a63">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Speak Lab">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="top">
+  <div>
+    <h1>Speak Lab</h1>
+    <p class="muted small" id="topSub">Seu professor de inglês por voz</p>
+  </div>
+  <select id="level" aria-label="Nível CEFR">
+    <option value="A1">A1</option>
+    <option value="A2" selected>A2</option>
+    <option value="B1">B1</option>
+    <option value="B2">B2</option>
+    <option value="C1">C1</option>
+  </select>
+</header>
+
+<main>
+  <div id="setupBanner" class="notice" hidden>
+    Falta conectar seu ElevenLabs (1 minuto). <button class="link" data-go="settings">Conectar agora</button>
+  </div>
+
+  <!-- HOME -->
+  <section class="view" id="view-home">
+    <div class="card level-card" id="levelCard"></div>
+
+    <div class="card quick">
+      <div class="row between"><span class="label">Dúvida rápida</span><span class="small muted" id="qHint">Como digo isso em inglês?</span></div>
+      <div class="seg" id="qModes" role="tablist"></div>
+      <form class="qbox" id="qForm">
+        <textarea id="qInput" rows="2" placeholder="Ex.: quero dizer que vou chegar atrasado na reunião" enterkeyhint="go"></textarea>
+        <div class="row between">
+          <button type="button" class="icon-btn mic-s" id="qMic" aria-label="Falar a dúvida"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+          <button type="submit" class="btn primary" id="qGo">Responder</button>
+        </div>
+      </form>
+    </div>
+    <div id="qResult"></div>
+    <div class="card" id="qRecentCard" hidden>
+      <span class="label">Suas dúvidas recentes</span>
+      <div id="qRecent"></div>
+    </div>
+
+    <div class="card">
+      <div class="row between"><span class="label">Rotina de hoje</span><span class="label" id="today"></span></div>
+      <div id="checks"></div>
+    </div>
+    <div class="card">
+      <div class="stats">
+        <div><div class="n" id="streak">0</div><div class="label">dias seguidos</div></div>
+        <div><div class="n" id="totalDays">0</div><div class="label">dias estudados</div></div>
+        <div><div class="n" id="talkMins">0</div><div class="label">min de conversa</div></div>
+      </div>
+      <div class="week" id="week"></div>
+    </div>
+  </section>
+
+  <!-- LEVEL TEST (full screen, not in the tab bar) -->
+  <section class="view" id="view-assess" hidden>
+    <div class="as-head">
+      <button class="icon-btn" id="asClose" aria-label="Sair do teste"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      <div class="as-progress"><div id="asBar"></div></div>
+      <span class="label" id="asStep"></span>
+    </div>
+    <div id="asBody"></div>
+  </section>
+
+  <!-- TALK -->
+  <section class="view" id="view-talk" hidden>
+    <div class="chips" id="scenes"></div>
+    <div class="stage">
+      <button class="orb" id="orb" aria-label="Começar conversa">
+        <span class="orb-ring"></span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+      </button>
+      <p class="orb-state" id="orbState">Toque para começar a conversa</p>
+      <button class="btn small-btn" id="muteBtn" hidden>Silenciar microfone</button>
+    </div>
+    <div class="feed" id="talkFeed" aria-live="polite"></div>
+  </section>
+
+  <!-- CHAT -->
+  <section class="view" id="view-chat" hidden>
+    <div class="chat-head">
+      <button class="icon-btn" id="chatMenu" aria-label="Conversas"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg></button>
+      <div class="chat-title" id="chatTitle">Nova conversa</div>
+      <button class="icon-btn" id="chatNew" aria-label="Nova conversa"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+    </div>
+
+    <div class="chat-empty" id="chatEmpty">
+      <h2 class="hello">What do you want to <em>study</em> today?</h2>
+      <p class="muted small">Escolha um modo. O professor responde em português ou inglês, conforme o modo.</p>
+      <div class="mode-grid" id="modeGrid"></div>
+      <span class="label">Para começar</span>
+      <div class="starters" id="starters"></div>
+    </div>
+
+    <div class="chat-log" id="chatLog" aria-live="polite"></div>
+
+    <form class="chat-composer" id="chatForm">
+      <div class="cbox">
+        <textarea id="chatInput" rows="1" placeholder="Escreva ou fale sua mensagem…" enterkeyhint="send"></textarea>
+        <div class="cbar">
+          <button type="button" class="mode-pill" id="chatModeBtn">Professor</button>
+          <div class="row">
+            <button type="button" class="icon-btn mic-s" id="chatMic" aria-label="Falar mensagem"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+            <button type="submit" class="send-btn" id="chatSend" aria-label="Enviar"><svg viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </section>
+
+  <div class="scrim" id="chatScrim" hidden></div>
+  <aside class="drawer" id="chatDrawer" hidden aria-label="Conversas">
+    <div class="row between"><span class="label">Conversas</span><button class="btn small-btn" id="drawerNew">+ Nova</button></div>
+    <div id="chatList"></div>
+  </aside>
+
+  <!-- PRON -->
+  <section class="view" id="view-pron" hidden>
+    <div class="chips" id="pronTopics"></div>
+    <div class="card">
+      <span class="label" id="pronMeta"></span>
+      <p class="target" id="pronText"></p>
+      <p class="ipa" id="pronTip"></p>
+      <p class="muted small" id="pronPt"></p>
+      <div class="row">
+        <button class="btn" id="pronListen">Ouvir</button>
+        <button class="btn" id="pronSlow">Devagar</button>
+        <button class="btn" id="pronNext">Próxima</button>
+      </div>
+      <button class="btn rec" id="pronRec">Gravar minha voz</button>
+    </div>
+    <div class="card" id="pronResult" hidden>
+      <div class="row between">
+        <div class="grow"><span class="label">Você disse</span><p id="pronHeard"></p></div>
+        <div class="score" id="pronScore"></div>
+      </div>
+      <p class="diff" id="pronDiff"></p>
+      <p class="small muted">Verde: reconhecida. Laranja: reconhecida, mas pouco clara. Vermelho: não reconhecida.</p>
+    </div>
+  </section>
+
+  <!-- VOCAB -->
+  <section class="view" id="view-vocab" hidden>
+    <div class="card flash">
+      <span class="label" id="flashCount"></span>
+      <div class="front" id="flashFront"></div>
+      <div class="muted" id="flashBack" hidden></div>
+      <div class="row center" id="flashBtns"></div>
+    </div>
+    <form class="card" id="vForm">
+      <span class="label">Adicionar palavra ou expressão</span>
+      <input id="vEn" placeholder="English · ex.: get along with" autocapitalize="off">
+      <input id="vPt" placeholder="Português · ex.: se dar bem com">
+      <button class="btn primary" type="submit">Salvar</button>
+    </form>
+    <div class="card">
+      <div class="row between"><span class="label">Meu vocabulário</span><span class="label" id="vTotal"></span></div>
+      <div id="vList"></div>
+    </div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section class="view" id="view-settings" hidden>
+    <form class="card" id="setForm">
+      <span class="label">Conectar ao ElevenLabs</span>
+      <ol class="small steps">
+        <li>No site do ElevenLabs, abra <b>Settings → API Keys → Create API key</b> e copie a chave.</li>
+        <li>Cole abaixo e toque em <b>Configurar meu professor automaticamente</b>.</li>
+      </ol>
+      <label>Chave de API (fica só neste aparelho)
+        <input id="sKey" type="password" placeholder="sk_..." autocapitalize="off" autocomplete="off" spellcheck="false">
+      </label>
+      <label>Voz para pronúncia e vocabulário (opcional)
+        <select id="sVoice"><option value="">Voz padrão</option></select>
+      </label>
+      <button class="btn" type="button" id="sLoadVoices">Carregar minhas vozes</button>
+      <button class="btn primary big" type="button" id="sAuto">Configurar meu professor automaticamente</button>
+      <p class="small muted" id="sStatus" aria-live="polite"></p>
+      <details class="small">
+        <summary>Já tenho um agente (avançado)</summary>
+        <label>ID do agente
+          <input id="sAgent" placeholder="agent_..." autocapitalize="off" autocomplete="off" spellcheck="false">
+        </label>
+        <button class="btn" type="submit">Salvar ID</button>
+      </details>
+    </form>
+    <div class="card">
+      <span class="label">Como instalar no iPhone</span>
+      <ol class="small steps">
+        <li>Abra este endereço no <b>Safari</b>.</li>
+        <li>Toque em <b>Compartilhar</b> (quadrado com seta).</li>
+        <li>Escolha <b>Adicionar à Tela de Início</b> e confirme.</li>
+        <li>Abra pelo ícone <b>Speak Lab</b>. Na primeira conversa, permita o microfone.</li>
+      </ol>
+    </div>
+    <div class="card">
+      <span class="label">Backup do progresso</span>
+      <p class="small muted">Seu vocabulário e histórico ficam guardados neste aparelho. Copie o backup de vez em quando.</p>
+      <textarea id="backupBox" rows="3" placeholder="Cole aqui um backup para restaurar"></textarea>
+      <div class="row">
+        <button class="btn" type="button" id="bExport">Copiar backup</button>
+        <button class="btn" type="button" id="bImport">Restaurar</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<nav class="tabbar" id="tabbar">
+  <button data-tab="home" aria-selected="true"><svg viewBox="0 0 24 24"><path d="M4 11 12 4l8 7v9h-5v-6H9v6H4z"/></svg>Início</button>
+  <button data-tab="talk"><svg viewBox="0 0 24 24"><path d="M12 3a3 3 0 0 1 3 3v5a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3ZM5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Conversa</button>
+  <button data-tab="chat"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H8l-4 4V5Z"/><path d="M8 9.5h8M8 12.5h5"/></svg>Chat</button>
+  <button data-tab="pron"><svg viewBox="0 0 24 24"><path d="M3 12h2M7 8v8M11 5v14M15 9v6M19 11v2"/></svg>Pronúncia</button>
+  <button data-tab="vocab"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M8 10h8M8 14h5"/></svg>Palavras</button>
+  <button data-tab="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>Ajustes</button>
+</nav>
+
+<div class="toast" id="toast" role="status" hidden></div>
+<div class="update-bar" id="updateBar" hidden>Nova versão do app disponível. <button class="link" id="updateBtn" type="button">Atualizar agora</button></div>
+
+<script src="vendor/elevenlabs-client-1.35.0.js"></script>
+<script src="sentences.js"></script>
+<script src="agent-config.js"></script>
+<script src="app.js"></script>
+<script src="assess-bank.js"></script>
+<script src="assess.js"></script>
+<script src="home.js"></script>
+</body>
+</html>
