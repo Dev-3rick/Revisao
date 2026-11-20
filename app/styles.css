@@ -71,7 +71,7 @@ main { max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; 
 
 .chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
 .chips::-webkit-scrollbar { display: none; }
-.chip { flex: none; border: 1px solid var(--line); background: var(--surface); padding: 7px 13px; border-radius: 999px; font-size: 0.88rem; }
+.chip { flex: none; border: 1px solid var(--line); background: var(--surface); padding: 9px 15px; min-height: 40px; border-radius: 999px; font-size: 0.9rem; }
 .chip[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); font-weight: 600; }
 
 /* Talk */
@@ -168,7 +168,7 @@ body.in-chat { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom
   border-bottom: 1px solid var(--line);
 }
 .chat-title { flex: 1; min-width: 0; text-align: center; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.icon-btn { width: 40px; height: 40px; flex: none; border: 0; background: none; border-radius: 10px; display: grid; place-items: center; color: var(--fg); }
+.icon-btn { width: 44px; height: 44px; flex: none; border: 0; background: none; border-radius: 10px; display: grid; place-items: center; color: var(--fg); }
 .icon-btn svg, .send-btn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
 .icon-btn:active { background: var(--sunk); }
 
@@ -205,7 +205,7 @@ body.in-chat { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom
 @keyframes dot { 0%, 80%, 100% { opacity: 0.25; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-3px); } }
 @media (prefers-reduced-motion: reduce) { .caret, .dots i { animation: none; } }
 .m-acts { display: flex; gap: 14px; }
-.m-acts button { border: 0; background: none; padding: 4px 0; color: var(--muted); font-size: 0.8rem; font-weight: 600; }
+.m-acts button { border: 0; background: none; padding: 10px 6px; margin-left: -6px; min-height: 40px; color: var(--muted); font-size: 0.8rem; font-weight: 600; }
 .m-acts button:active { color: var(--accent); }
 .chat-log .fix, .chat-log .saved { margin-left: 38px; }
 
@@ -218,10 +218,10 @@ body.in-chat { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom
 .cbox { max-width: 640px; margin: 0 auto; background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 10px 10px 8px 14px; box-shadow: 0 4px 18px rgb(0 0 0 / 0.07); display: flex; flex-direction: column; gap: 6px; }
 .cbox textarea { border: 0; background: none; resize: none; padding: 4px 0; max-height: 160px; min-height: 26px; font-size: 16px; color: var(--fg); outline: none; width: 100%; }
 .cbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.mode-pill { border: 1px solid var(--line); background: var(--bg); border-radius: 999px; padding: 5px 12px; font-size: 0.8rem; font-weight: 600; color: var(--fg); }
+.mode-pill { border: 1px solid var(--line); background: var(--bg); border-radius: 999px; padding: 8px 14px; min-height: 36px; font-size: 0.8rem; font-weight: 600; color: var(--fg); }
 .mode-pill:disabled { opacity: 0.7; }
 .mic-s.on { color: #fff; background: var(--live); animation: breathe 1.4s infinite; }
-.send-btn { width: 36px; height: 36px; border-radius: 10px; border: 0; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; }
+.send-btn { width: 40px; height: 40px; border-radius: 10px; border: 0; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; }
 .send-btn:disabled { opacity: 0.45; }
 
 .scrim { position: fixed; inset: 0; z-index: 35; background: rgb(0 0 0 / 0.35); }
@@ -235,5 +235,38 @@ body.in-chat { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom
 .c-open { flex: 1; min-width: 0; border: 0; background: none; text-align: left; padding: 9px 8px; display: flex; flex-direction: column; color: var(--fg); }
 .c-title { font-weight: 600; font-size: 0.92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .c-meta { font-size: 0.74rem; color: var(--muted); }
-.c-del { border: 0; background: none; color: var(--muted); font-size: 1.1rem; padding: 6px 10px; flex: none; }
+.c-del { border: 0; background: none; color: var(--muted); font-size: 1.2rem; min-width: 44px; min-height: 44px; padding: 0 10px; flex: none; }
 .c-del[data-armed] { color: var(--bad); font-size: 0.78rem; font-weight: 700; }
+
+/* ---------- Mobile polish ---------- */
+html, body { overscroll-behavior-y: none; }
+.tabbar, .chips, .chat-head, .mode-grid, .btn, .chip, .orb, .icon-btn, .send-btn, .mode-pill, .starter, .c-open { -webkit-user-select: none; user-select: none; }
+.btn:active, .chip:active, .mode:active, .starter:active, .c-open:active, .send-btn:active, .mode-pill:active { transform: scale(0.97); opacity: 0.85; }
+.tabbar button:active svg { transform: scale(0.9); }
+.btn, .chip, .mode, .starter, .send-btn, .mode-pill, .tabbar svg { transition: transform 0.08s, opacity 0.08s; }
+.starter { min-height: 44px; }
+.vrow .acts button { min-height: 40px; padding: 8px 2px; }
+.check { min-height: 48px; }
+
+/* Keyboard open (iOS): hide the tab bar and sit the composer right on top of the keyboard. */
+body.kb-open .tabbar { display: none; }
+body.kb-open .chat-composer { bottom: var(--kb, 0px); padding-bottom: 8px; }
+body.kb-open.in-chat { padding-bottom: calc(var(--kb, 0px) + 140px); }
+
+.update-bar {
+  position: fixed; left: 12px; right: 12px; z-index: 50; top: calc(env(safe-area-inset-top, 0px) + 8px);
+  background: var(--fg); color: var(--bg); border-radius: 14px; padding: 12px 14px; font-size: 0.9rem; font-weight: 600;
+  display: flex; gap: 8px; align-items: center; justify-content: space-between; box-shadow: 0 6px 20px rgb(0 0 0 / 0.2);
+}
+.update-bar .link { color: var(--accent-soft); white-space: nowrap; }
+
+/* Small phones (iPhone SE / mini) */
+@media (max-width: 380px) {
+  .orb { width: 116px; height: 116px; }
+  .hello { font-size: 1.5rem; }
+  .mode { padding: 9px 10px; }
+  .mode span { display: none; }
+  .tabbar button { font-size: 0.6rem; }
+  .target { font-size: 1.3rem; }
+}
+@media (max-height: 700px) { .stage { padding-block: 8px 0; } }

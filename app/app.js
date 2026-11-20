@@ -187,7 +187,14 @@
       },
     };
   }
-  const scrollFeed = () => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+  let followBottom = true;
+  window.addEventListener("scroll", () => {
+    followBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 160;
+  }, { passive: true });
+  const scrollFeed = (force) => {
+    if (!force && !followBottom) return;
+    window.scrollTo({ top: document.documentElement.scrollHeight, behavior: force ? "auto" : "smooth" });
+  };
 
   // ---------------- TALK (voice agent) ----------------
   const SCENES = [
@@ -225,6 +232,7 @@
       const feed = $("talkFeed");
       feed.innerHTML = "";
       voice = await EL.Conversation.startSession({
+        useWakeLock: true,
         ...(await sessionAuth(false)),
         dynamicVariables: { mode: "conversation", level: S.level, scenario: scene.brief, first_message: scene.hello, known_words: knownWords(), instructions: "Voice conversation practice." },
         clientTools: clientTools(feed),
@@ -358,7 +366,20 @@
   }
 
   // ----- drawer, modes, starters -----
-  const openDrawer = (on) => { $("chatDrawer").hidden = !on; $("chatScrim").hidden = !on; };
+  const openDrawer = (on) => { $("chatDrawer").hidden = !on; $("chatScrim").hidden = !on; if (on) document.activeElement?.blur?.(); };
+  // Swipe right from the left edge opens the conversation list; swipe left closes it.
+  let swipe = null;
+  document.addEventListener("touchstart", (e) => {
+    if ($("view-chat").hidden || e.touches.length !== 1) return;
+    const t = e.touches[0], drawerOpen = !$("chatDrawer").hidden;
+    if (drawerOpen || t.clientX < 28) swipe = { x: t.clientX, y: t.clientY, drawerOpen };
+  }, { passive: true });
+  document.addEventListener("touchend", (e) => {
+    if (!swipe) return;
+    const t = e.changedTouches[0], dx = t.clientX - swipe.x, dy = Math.abs(t.clientY - swipe.y);
+    if (dy < 60) { if (!swipe.drawerOpen && dx > 60) openDrawer(true); if (swipe.drawerOpen && dx < -60) openDrawer(false); }
+    swipe = null;
+  }, { passive: true });
   $("chatMenu").addEventListener("click", () => openDrawer(true));
   $("chatScrim").addEventListener("click", () => openDrawer(false));
   $("chatNew").addEventListener("click", () => { newChat(); openDrawer(false); });
@@ -496,7 +517,7 @@
     }
     $("chatInput").value = ""; autosize();
     pushMsg(conv, { r: "u", t: text });
-    setBusy(true); renderChat(); startStream();
+    setBusy(true); followBottom = true; renderChat(); startStream(); scrollFeed(true);
     try {
       (await ensureChat(conv)).send(text);
     } catch (e) {
@@ -767,6 +788,30 @@
   function renderAll() { renderVocab(); renderFlash(); renderPlan(); renderChat(); }
   renderScenes(); renderPronTopics(); nextPron(); fillSettings(); refreshSetupBanner(); renderAll();
   showTab(location.hash.slice(1) || "talk");
-  if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});
+  // iOS keyboard: keep the chat composer on top of the keyboard and hide the tab bar while typing.
+  const vv = window.visualViewport;
+  function onViewport() {
+    const kb = vv ? Math.max(0, window.innerHeight - vv.height - vv.offsetTop) : 0;
+    document.documentElement.style.setProperty("--kb", kb + "px");
+    document.body.classList.toggle("kb-open", kb > 120 || (document.activeElement?.matches?.("textarea, input") && matchMedia("(pointer: coarse)").matches));
+  }
+  vv?.addEventListener("resize", onViewport); vv?.addEventListener("scroll", onViewport);
+  document.addEventListener("focusin", () => { onViewport(); if (document.activeElement?.id === "chatInput") setTimeout(() => scrollFeed(true), 300); });
+  document.addEventListener("focusout", () => setTimeout(onViewport, 50));
+
+  // Leaving the app ends a voice call (no credits spent in the background) and checks for a new version on return.
+  let swReg = null, endedInBackground = false;
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) { if (voice) { voice.endSession().catch(() => {}); endedInBackground = true; } }
+    else { swReg?.update().catch(() => {}); if (endedInBackground) { endedInBackground = false; toast("A conversa foi encerrada quando você saiu do app."); } }
+  });
+
+  // Installed apps have no reload button: offer the new version when one is ready.
+  if ("serviceWorker" in navigator && location.protocol === "https:") {
+    const hadController = Boolean(navigator.serviceWorker.controller);
+    navigator.serviceWorker.register("sw.js").then((r) => (swReg = r)).catch(() => {});
+    navigator.serviceWorker.addEventListener("controllerchange", () => { if (hadController) $("updateBar").hidden = false; });
+  }
+  $("updateBtn").addEventListener("click", () => location.reload());
   if (navigator.storage?.persist) navigator.storage.persist().catch(() => {});
 })();
