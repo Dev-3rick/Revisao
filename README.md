@@ -8,6 +8,9 @@ App instalável (PWA) em `app/`, publicado pelo GitHub Pages em **https://dev-3r
 
 - **Início com Dúvida rápida**: como dizer, como pronunciar, se está certo ou o que significa, em um cartão com áudio, pronúncia aproximada, alternativas e prática da fala.
 - **Teste de nível personalizado** (~12 min): perfil, gramática, áudio, fala e escrita. O resultado ajusta o nível, o plano diário, os cenários e o que o professor sabe sobre você.
+- **Minha voz**: grava 1 minuto e cria um clone da sua voz na sua conta ElevenLabs, para ouvir o inglês certo na sua própria voz (e o professor pode falar com ela).
+- **Responder rápido**: treino contra a trava do "I… do…", mede quantos segundos você leva para começar a falar e mostra uma resposta melhor.
+- **Meu diagnóstico**: junta correções, pronúncia, travadas e as conversas guardadas no ElevenLabs e mostra onde você mais erra e como você fala em português, em inglês.
 - **Conversa por voz em tempo real** com o agente do ElevenLabs, com cenários, correções na tela e palavras salvas automaticamente.
 - **Chat estilo Claude**: 7 modos de estudo (Professor, Gramática, Corrigir texto, Tradutor, Vocabulário, Simulado, Conversa escrita), respostas aparecendo enquanto são escritas, conversas salvas, microfone e leitura em voz alta.
 - **Pronúncia**: voz do ElevenLabs para ouvir e Scribe para avaliar a sua fala palavra por palavra.

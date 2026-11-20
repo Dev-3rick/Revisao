@@ -1,6 +1,6 @@
 // Service worker: keeps the app shell available offline.
 // Network calls to ElevenLabs are never cached.
-const CACHE = "speak-lab-v6";
+const CACHE = "speak-lab-v7";
 const SHELL = [
   "./",
   "./index.html",
@@ -9,6 +9,7 @@ const SHELL = [
   "./sentences.js",
   "./agent-config.js",
   "./home.js",
+  "./coach.js",
   "./assess.js",
   "./assess-bank.js",
   "./manifest.webmanifest",
