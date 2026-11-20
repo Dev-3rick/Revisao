@@ -820,14 +820,19 @@
       const list = await (await el(`/v1/convai/agents?search=${encodeURIComponent(C.name)}&page_size=20`)).json();
       let agent = (list.agents || []).find((a) => a.name === C.name);
       if (!agent) {
-        say("Criando as funções do app…");
+        say("Preparando as funções do app…");
+        // Reuse tools created by an earlier attempt, so a retry never duplicates them.
+        let existing = [];
+        try { existing = (await (await el("/v1/convai/tools")).json()).tools || []; } catch {}
         const toolIds = [];
         for (const t of C.tools) {
+          const found = existing.find((x) => x.tool_config?.name === t.name && x.tool_config?.type === "client");
+          if (found) { toolIds.push(found.id); continue; }
           const r = await (await el("/v1/convai/tools", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tool_config: t }) })).json();
           toolIds.push(r.id);
         }
         say("Criando o professor…");
-        const tts = { model_id: "eleven_flash_v2_5", ...($("sVoice").value ? { voice_id: $("sVoice").value } : {}) };
+        const tts = { model_id: "eleven_flash_v2", ...($("sVoice").value ? { voice_id: $("sVoice").value } : {}) };
         const full = {
           name: C.name, tags: ["speak-lab"],
           conversation_config: {

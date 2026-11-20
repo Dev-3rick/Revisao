@@ -66,6 +66,7 @@ Rules: "sounds_like" is an approximation written with Portuguese spelling (e.g. 
   $("qInput").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); ask(); } });
 
   // ----- result card -----
+  const inl = (t) => esc(t).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/(^|[^*])\*([^*]+)\*/g, "$1<em>$2</em>");
   const VERDICT = { correct: ["ok", "Está correto"], almost: ["almost", "Quase: pequenos ajustes"], wrong: ["no", "Precisa ajustar"] };
   let current = null;
   function renderResult(item) {
@@ -85,9 +86,9 @@ Rules: "sounds_like" is an approximation written with Portuguese spelling (e.g. 
       </div>
       <div id="qPractice" hidden></div>
       ${r.ipa || r.sounds_like ? `<div class="q-pron">${r.ipa ? `<span class="ipa">${esc(r.ipa)}</span>` : ""}${r.sounds_like ? `<span>soa como <b>${esc(r.sounds_like)}</b></span>` : ""}</div>` : ""}
-      ${r.tips ? `<p class="small">${esc(r.tips)}</p>` : ""}
+      ${r.tips ? `<p class="small">${inl(r.tips)}</p>` : ""}
       ${alts.length ? `<div class="q-alts">${alts.map((a, i) => `<div class="q-alt"><span class="tone">${esc(a.tone || "")}</span><span class="grow">${esc(a.text)}</span><button class="mini-play" data-alt="${i}" aria-label="Ouvir alternativa">▶</button></div>`).join("")}</div>` : ""}
-      ${r.explanation ? `<p class="q-expl">${esc(r.explanation)}</p>` : ""}
+      ${r.explanation ? `<p class="q-expl">${inl(r.explanation)}</p>` : ""}
       ${r.example?.en ? `<div class="q-ex"><button class="mini-play" data-q="ex" aria-label="Ouvir exemplo">▶</button><div><p>${esc(r.example.en)}</p><p class="small muted">${esc(r.example.pt || "")}</p></div></div>` : ""}
       <button class="link small" data-q="more">Perguntar mais no Chat</button>
     </div>`;
