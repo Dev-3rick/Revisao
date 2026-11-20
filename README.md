@@ -2,7 +2,19 @@
 
 Objetivo: falar e entender inglês no dia a dia e no trabalho, com uma IA sempre disponível para conversar, corrigir e tirar dúvidas.
 
-## 1. A ferramenta: English Speak Lab
+## 1. O app no iPhone: Speak Lab (ElevenLabs)
+
+App instalável (PWA) em `app/`, publicado pelo GitHub Pages em **https://dev-3rick.github.io/Revisao/**.
+
+- **Conversa por voz em tempo real** com o agente do ElevenLabs, com cenários, correções na tela e palavras salvas automaticamente.
+- **Dúvidas** por texto, respondidas em português.
+- **Pronúncia**: voz do ElevenLabs para ouvir e Scribe para avaliar a sua fala palavra por palavra.
+- **Palavras** com repetição espaçada e **Plano** diário.
+
+Instalar: abra o link no Safari → Compartilhar → **Adicionar à Tela de Início**.
+Configurar (uma vez): siga [`docs/ELEVENLABS.md`](docs/ELEVENLABS.md) e cole o ID do agente e a chave em **Ajustes**.
+
+## 1b. Versão no claude.ai: English Speak Lab
 
 Página web (abre no celular ou no PC, sem instalar nada): `english-lab/index.html`, publicada no claude.ai.
 
