@@ -8,7 +8,7 @@ Tempo: cerca de 15 minutos, uma vez só. No fim você terá dois valores para co
 |---|---|---|
 | Conversa por voz | **Agents** (voz, WebRTC) | Ouve, pensa e responde em tempo real, e você pode interromper como numa conversa de verdade. |
 | Correções e salvar palavras | **Client tools** do agente | O professor chama funções do app: mostra a correção na tela e salva palavras no seu vocabulário. |
-| Dúvidas | **Agents** em modo texto | O mesmo agente, respondendo por escrito e em português. |
+| Chat (estilo Claude) | **Agents** em modo texto | O mesmo agente por escrito, com 7 modos de estudo. As respostas aparecem enquanto são escritas e as conversas ficam salvas. |
 | Ouvir frases e palavras | **Text to Speech** (Flash v2.5) | Voz natural. Cada frase fica guardada no aparelho, então repetir não gasta crédito. |
 | Avaliar pronúncia | **Speech to Text** (Scribe) | Transcreve sua fala com a confiança de cada palavra, para marcar o que saiu pouco claro. |
 
@@ -44,11 +44,12 @@ Words the learner already saved: {{known_words}}
 - Every 8 to 10 turns, give one short spoken tip about what they are doing well and one thing to improve.
 - Never use emojis, markdown, lists or symbols: everything you write is read aloud.
 
-# If mode is "questions" (text)
-- Answer in Brazilian Portuguese, clear and direct, adapted to {{level}}.
-- Structure: short explanation; 3 to 5 English examples with translation; one common mistake Brazilians make about it; finish with a mini exercise of 2 sentences for the learner to try (without answers). When they reply to the exercise, correct it.
-- Use lists with "-" and **bold** when it helps. No tables.
-- If the learner asks for a level test, ask 5 quick questions one at a time and at the end estimate their CEFR level with a short justification.
+# If mode is "chat" (text chat in the app)
+- Follow these mode instructions exactly: {{instructions}}
+- Unless those instructions say otherwise, explain in Brazilian Portuguese and keep English examples in English.
+- Formatting is shown as text, so use short paragraphs, lists with "-" and **bold** for key words. No tables, no emojis.
+- Keep answers focused: usually under 250 words. Offer to go deeper instead of writing everything at once.
+- If earlier messages are sent to you as context, continue from them naturally.
 - When a word or expression is worth keeping, call save_word.
 
 # Always
@@ -66,6 +67,7 @@ O painel pede valores de teste para as variáveis do prompt. Use:
 | `scenario` | `a friendly casual chat` |
 | `first_message` | `Hi! How's your day going so far?` |
 | `known_words` | `none yet` |
+| `instructions` | `General English tutor. Answer in Brazilian Portuguese.` |
 
 O app envia os valores reais a cada conversa: nível, cenário, modo e as palavras que você já salvou.
 
@@ -99,7 +101,7 @@ Deixe **Wait for response** desligado nas duas, para a conversa não travar.
 Em **Security** (ou **Advanced**) do agente:
 
 1. **Enable authentication**: ligado. Assim só quem tem a sua chave consegue usar o agente. O app pede um token temporário com a sua chave a cada conversa.
-2. **Overrides**: ative **Text only** (necessário para a aba Dúvidas).
+2. **Overrides**: ative **Text only** (necessário para a aba Chat).
 3. **Max conversation duration**: 900 segundos (15 min). Evita gastar crédito se você esquecer o app aberto.
 
 Copie o **Agent ID** (algo como `agent_...`), que fica no topo da página do agente.
@@ -129,7 +131,7 @@ A chave fica guardada só no seu iPhone, dentro do app. Ela nunca vai para o Git
 
 - **Conversa** é o que mais consome (cobrada por minuto). É também o que mais faz você evoluir: priorize.
 - **Pronúncia**: cada frase é gerada uma vez e depois sai do cache do aparelho, sem custo. A transcrição é cobrada por duração de áudio, e as gravações são curtas.
-- **Dúvidas** em texto custam bem menos que voz.
+- **Chat** em texto custa bem menos que voz. O microfone do chat usa a transcrição (Scribe), cobrada pela duração do áudio.
 - Acompanhe em **elevenlabs.io → Usage**. Se o crédito apertar: 10 min de conversa por dia, e o resto em Pronúncia e Palavras.
 
 ## Se algo não funcionar
@@ -138,7 +140,8 @@ A chave fica guardada só no seu iPhone, dentro do app. Ela nunca vai para o Git
 |---|---|---|
 | "Chave de API recusada" | Chave errada ou sem permissão | Confira o Passo 4 e as permissões. |
 | A conversa não conecta | Agent ID errado, ou a chave sem a permissão de Agents | Confira o ID e a permissão "ElevenLabs Agents". |
-| Dúvidas não respondem | Override "Text only" desligado | Passo 3, item 2. |
+| O chat não responde | Override "Text only" desligado | Passo 3, item 2. |
+| O chat ignora o modo escolhido | Prompt antigo, sem o bloco `mode is "chat"` | Cole o system prompt atualizado do Passo 1. |
 | Correções não aparecem na tela | Nome da tool diferente | Os nomes devem ser `save_word` e `show_correction`, exatamente assim. |
 | Microfone não abre | Permissão negada no iPhone | Ajustes do iPhone → Safari → Microfone → Permitir. |
 | Sem som | iPhone no silencioso ou volume baixo | Tire do modo silencioso e aumente o volume. |

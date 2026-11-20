@@ -7,7 +7,7 @@ Objetivo: falar e entender inglês no dia a dia e no trabalho, com uma IA sempre
 App instalável (PWA) em `app/`, publicado pelo GitHub Pages em **https://dev-3rick.github.io/Revisao/**.
 
 - **Conversa por voz em tempo real** com o agente do ElevenLabs, com cenários, correções na tela e palavras salvas automaticamente.
-- **Dúvidas** por texto, respondidas em português.
+- **Chat estilo Claude**: 7 modos de estudo (Professor, Gramática, Corrigir texto, Tradutor, Vocabulário, Simulado, Conversa escrita), respostas aparecendo enquanto são escritas, conversas salvas, microfone e leitura em voz alta.
 - **Pronúncia**: voz do ElevenLabs para ouvir e Scribe para avaliar a sua fala palavra por palavra.
 - **Palavras** com repetição espaçada e **Plano** diário.
 

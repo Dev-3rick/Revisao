@@ -36,13 +36,15 @@
   }
 
   // ---------------- navigation ----------------
-  const TABS = ["talk", "ask", "pron", "vocab", "plan", "settings"];
+  const TABS = ["talk", "chat", "pron", "vocab", "plan", "settings"];
   function showTab(name) {
+    if (name === "ask") name = "chat";
     if (!TABS.includes(name)) name = "talk";
     document.querySelectorAll("#tabbar button").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.tab === name)));
     TABS.forEach((t) => ($("view-" + t).hidden = t !== name));
     if (location.hash !== "#" + name) history.replaceState(null, "", "#" + name);
-    if (name !== "ask") endAskSession();
+    if (name !== "chat") endChatSession();
+    document.body.classList.toggle("in-chat", name === "chat");
     if (name === "vocab") renderFlash();
     if (name === "plan") renderPlan();
     window.scrollTo(0, 0);
@@ -224,7 +226,7 @@
       feed.innerHTML = "";
       voice = await EL.Conversation.startSession({
         ...(await sessionAuth(false)),
-        dynamicVariables: { mode: "conversation", level: S.level, scenario: scene.brief, first_message: scene.hello, known_words: knownWords() },
+        dynamicVariables: { mode: "conversation", level: S.level, scenario: scene.brief, first_message: scene.hello, known_words: knownWords(), instructions: "Voice conversation practice." },
         clientTools: clientTools(feed),
         onConnect: () => { voiceStarted = Date.now(); setOrb("listening", "Pode falar"); $("muteBtn").hidden = false; },
         onModeChange: ({ mode }) => setOrb(mode, mode === "speaking" ? "Professor falando… (pode interromper)" : muted ? "Microfone silenciado" : "Ouvindo você"),
@@ -258,67 +260,277 @@
     setOrb(muted ? "connecting" : "listening", muted ? "Microfone silenciado" : "Ouvindo você");
   });
 
-  // ---------------- ASK (text-only agent) ----------------
-  const ASK_EX = ["Diferença entre make e do", "Present perfect: quando usar?", "Como pedir aumento em inglês?", "Phrasal verbs com get", "Como pronunciar th?", "Me dê um teste rápido de nível"];
-  $("askExamples").innerHTML = ASK_EX.map((q) => `<button class="chip" data-q="${esc(q)}">${esc(q)}</button>`).join("");
-  $("askExamples").addEventListener("click", (e) => { const b = e.target.closest("[data-q]"); if (b) { $("askInput").value = b.dataset.q; sendAsk(); } });
+  // ---------------- CHAT (text-only agent, Claude-style) ----------------
+  // Each conversation is kept on the device. The agent session is live only while a conversation is open;
+  // reopening an old one starts a new session and hands the agent the earlier messages as context.
+  const MODES = {
+    tutor: {
+      name: "Professor", desc: "Tire qualquer dúvida de inglês",
+      starters: ["Quando uso since e quando uso for?", "Diferença entre make e do", "Como pedir aumento em inglês?"],
+      prompt: "General English tutor. Answer in Brazilian Portuguese with English examples (with translation). Structure: short explanation, 3 to 5 examples, one common mistake Brazilians make, and finish with a 2-sentence mini exercise (no answers). When the learner answers an exercise, correct it.",
+    },
+    grammar: {
+      name: "Gramática", desc: "Regras explicadas com exemplos",
+      starters: ["Me explique o present perfect", "Como funcionam os conditionals?", "Quando usar a, an e the?"],
+      prompt: "Grammar teacher. Explain the grammar point step by step in Brazilian Portuguese: when to use it, the structure (affirmative, negative, question), 4 to 6 examples with translation, contrast with similar structures, typical Brazilian mistakes. End with 3 short exercises and correct them when answered.",
+    },
+    fix: {
+      name: "Corrigir texto", desc: "Cole um texto em inglês para revisar",
+      starters: ["Corrija: Yesterday I go to the shop and buyed some breads.", "Revise meu e-mail para o chefe", "Corrija meu parágrafo sobre minhas férias"],
+      prompt: "Writing corrector. The learner sends English text. Reply in Brazilian Portuguese with: 1) the corrected text in English, 2) a list of each mistake as \"wrong → right: short reason\", 3) a more natural native-like version, 4) a score from 0 to 10 for grammar and for naturalness. Be encouraging. If the learner hasn't sent text yet, ask for it.",
+    },
+    translate: {
+      name: "Tradutor", desc: "Traduções naturais com contexto",
+      starters: ["Como digo 'estou de boa' em inglês?", "Traduza: Vou dar uma passada aí mais tarde", "O que significa 'it's not my cup of tea'?"],
+      prompt: "Translator and explainer between Portuguese and English. Give 2 or 3 natural options, label each as informal, neutral or formal, explain differences in Brazilian Portuguese, and give one example sentence for each. For English idioms, explain the meaning, the origin when interesting, and the Portuguese equivalent.",
+    },
+    vocab: {
+      name: "Vocabulário", desc: "Aprenda palavras por tema",
+      starters: ["10 palavras para reuniões de trabalho", "Phrasal verbs mais usados com get", "Palavras para falar de sentimentos"],
+      prompt: "Vocabulary coach. Teach words or expressions by theme: for each item give the English word, pronunciation hint, meaning in Portuguese and one example. Call save_word for every item you teach. Then quiz the learner with 3 quick questions using the new words and correct the answers.",
+    },
+    exam: {
+      name: "Simulado", desc: "Teste seu nível com perguntas",
+      starters: ["Faça um teste de nível comigo", "Quiz de 5 perguntas de gramática B1", "Teste meu vocabulário de viagem"],
+      prompt: "Examiner. Run a quiz: ask ONE question at a time (multiple choice or short answer), wait for the answer, say if it is right, explain briefly in Brazilian Portuguese, then ask the next. After 5 to 10 questions give a score, the estimated CEFR level and the 3 topics to study next.",
+    },
+    write: {
+      name: "Conversa escrita", desc: "Converse só em inglês por texto",
+      starters: ["Hi! Let's talk about movies.", "Can we practise a job interview?", "Tell me something interesting about London."],
+      prompt: "Written conversation partner. Write ONLY in English at the learner's level, 1 to 3 sentences, always ending with a question. When the learner makes a clear mistake, call show_correction once per turn, then keep chatting naturally. Do not explain grammar unless asked.",
+    },
+  };
+  S.chats = store.get("chats", []);
+  let chatId = store.get("chatId", null);
+  let draftMode = store.get("chatMode", "tutor");
+  const saveChats = () => { S.chats = S.chats.sort((a, b) => b.at - a.at).slice(0, 60); store.set("chats", S.chats); store.set("chatId", chatId); };
+  const current = () => S.chats.find((c) => c.id === chatId) || null;
 
-  let ask = null, askStarting = null, askWaiting = null;
-  function md(s) {
-    const lines = esc(s).split("\n"); let html = "", list = false;
-    for (let l of lines) {
-      l = l.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/^#{1,4}\s*(.+)$/, "<strong>$1</strong>");
-      if (/^\s*[-*•]\s+/.test(l)) { if (!list) { html += "<ul>"; list = true; } html += "<li>" + l.replace(/^\s*[-*•]\s+/, "") + "</li>"; continue; }
-      if (list) { html += "</ul>"; list = false; }
-      if (l.trim()) html += "<p>" + l + "</p>";
+  function md(src) {
+    // Small, safe Markdown subset: headings, bold, italic, inline code, lists, paragraphs.
+    const lines = esc(src).split("\n"); let html = "", list = null;
+    const inline = (l) => l.replace(/`([^`]+)`/g, "<code>$1</code>").replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/(^|[^*])\*([^*\n]+)\*/g, "$1<em>$2</em>");
+    for (const raw of lines) {
+      const l = raw.trimEnd();
+      const ul = /^\s*[-*•]\s+(.*)/.exec(l), ol = /^\s*\d+[.)]\s+(.*)/.exec(l);
+      if (ul || ol) {
+        const tag = ul ? "ul" : "ol";
+        if (list !== tag) { if (list) html += `</${list}>`; html += `<${tag}>`; list = tag; }
+        html += "<li>" + inline((ul || ol)[1]) + "</li>"; continue;
+      }
+      if (list) { html += `</${list}>`; list = null; }
+      const h = /^#{1,4}\s*(.+)/.exec(l);
+      if (h) html += "<h3>" + inline(h[1]) + "</h3>";
+      else if (l.trim()) html += "<p>" + inline(l) + "</p>";
     }
-    return html + (list ? "</ul>" : "");
+    return html + (list ? `</${list}>` : "");
   }
-  async function ensureAsk() {
-    if (ask) return ask;
-    if (askStarting) return askStarting;
-    const feed = $("askFeed");
-    askStarting = (async () => {
-      const conv = await EL.Conversation.startSession({
+  const plain = (s) => s.replace(/\*\*|`|^#+\s*/gm, "").replace(/^\s*[-*•]\s+/gm, "").trim();
+
+  // ----- rendering -----
+  function msgHTML(m, i) {
+    if (m.r === "u") return `<div class="m-user"><div class="bubble me">${esc(m.t)}</div></div>`;
+    if (m.r === "fix") return `<div class="fix"><span class="label">Correção</span><span><s>${esc(m.o)}</s> → <b>${esc(m.c)}</b></span><span>${esc(m.e)}</span></div>`;
+    if (m.r === "saved") return `<div class="saved">+ ${esc(m.t)} salvo no vocabulário</div>`;
+    return `<div class="m-ai"><div class="m-avatar" aria-hidden="true">C</div><div class="m-body"><div class="md">${md(m.t)}</div>
+      <div class="m-acts"><button data-act="say" data-i="${i}">Ouvir</button><button data-act="copy" data-i="${i}">Copiar</button></div></div></div>`;
+  }
+  function renderChat() {
+    const c = current();
+    const mode = MODES[c?.mode || draftMode] || MODES.tutor;
+    $("chatTitle").textContent = c ? c.title : "Nova conversa";
+    $("chatModeBtn").textContent = mode.name;
+    $("chatModeBtn").disabled = Boolean(c && c.msgs.length);
+    $("chatEmpty").hidden = Boolean(c && c.msgs.length);
+    $("chatLog").innerHTML = c ? c.msgs.map(msgHTML).join("") : "";
+    if (!c || !c.msgs.length) {
+      $("modeGrid").innerHTML = Object.entries(MODES).map(([k, m]) => `<button class="mode ${k === (c?.mode || draftMode) ? "on" : ""}" data-mode="${k}"><b>${esc(m.name)}</b><span>${esc(m.desc)}</span></button>`).join("");
+      $("starters").innerHTML = mode.starters.map((q) => `<button class="starter" data-q="${esc(q)}">${esc(q)}</button>`).join("");
+    }
+    renderDrawer();
+    if (streaming) $("chatLog").append(streaming.el);
+    scrollFeed();
+  }
+  function renderDrawer() {
+    $("chatList").innerHTML = S.chats.length
+      ? S.chats.map((c) => `<div class="c-item ${c.id === chatId ? "on" : ""}"><button class="c-open" data-open="${c.id}"><span class="c-title">${esc(c.title)}</span><span class="c-meta">${esc(MODES[c.mode]?.name || "")} · ${new Date(c.at).toLocaleDateString("pt-BR", { day: "numeric", month: "short" })}</span></button><button class="c-del" data-del="${c.id}" aria-label="Apagar conversa">×</button></div>`).join("")
+      : `<p class="small muted">Suas conversas aparecem aqui.</p>`;
+  }
+
+  // ----- drawer, modes, starters -----
+  const openDrawer = (on) => { $("chatDrawer").hidden = !on; $("chatScrim").hidden = !on; };
+  $("chatMenu").addEventListener("click", () => openDrawer(true));
+  $("chatScrim").addEventListener("click", () => openDrawer(false));
+  $("chatNew").addEventListener("click", () => { newChat(); openDrawer(false); });
+  $("drawerNew").addEventListener("click", () => { newChat(); openDrawer(false); });
+  $("chatList").addEventListener("click", (e) => {
+    const o = e.target.closest("[data-open]");
+    if (o) { switchChat(o.dataset.open); openDrawer(false); return; }
+    const d = e.target.closest("[data-del]");
+    if (d) {
+      if (!d.dataset.armed) { d.dataset.armed = "1"; d.textContent = "apagar?"; setTimeout(() => d.isConnected && (delete d.dataset.armed, (d.textContent = "×")), 3000); return; }
+      S.chats = S.chats.filter((c) => c.id !== d.dataset.del);
+      if (chatId === d.dataset.del) { endChatSession(); chatId = null; }
+      saveChats(); renderChat();
+    }
+  });
+  $("chatModeBtn").addEventListener("click", () => { $("chatEmpty").hidden = false; $("modeGrid").scrollIntoView({ behavior: "smooth", block: "center" }); });
+  $("modeGrid").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-mode]"); if (!b) return;
+    draftMode = b.dataset.mode; store.set("chatMode", draftMode);
+    const c = current(); if (c && !c.msgs.length) c.mode = draftMode;
+    endChatSession(); renderChat(); $("chatInput").focus();
+  });
+  $("starters").addEventListener("click", (e) => { const b = e.target.closest("[data-q]"); if (b) { $("chatInput").value = b.dataset.q; sendChat(); } });
+  $("chatLog").addEventListener("click", async (e) => {
+    const b = e.target.closest("[data-act]"); if (!b) return;
+    const m = current()?.msgs[+b.dataset.i]; if (!m) return;
+    if (b.dataset.act === "say") speak(plain(m.t).slice(0, 1500));
+    if (b.dataset.act === "copy") {
+      try { await navigator.clipboard.writeText(m.t); toast("Copiado"); } catch { toast("Não consegui copiar"); }
+    }
+  });
+
+  function newChat() { endChatSession(); chatId = null; saveChats(); renderChat(); }
+  function switchChat(id) { if (id === chatId) return; endChatSession(); chatId = id; saveChats(); renderChat(); }
+
+  // ----- agent session -----
+  let chat = null, chatApi = null, chatConvId = null, chatStarting = null, busy = false, streaming = null, replyTimer = null;
+  const GREETING = "Ready.";
+  function closeSession() {
+    if (chat) chat.endSession().catch(() => {});
+    chat = null; chatApi = null; chatConvId = null;
+  }
+  function endChatSession() { closeSession(); streaming?.el.remove(); streaming = null; setBusy(false); }
+  function setBusy(on) {
+    busy = on;
+    $("chatSend").disabled = on;
+    clearTimeout(replyTimer);
+    if (on) replyTimer = setTimeout(() => { if (busy) { finishStream(null); setBusy(false); toast("O professor demorou para responder. Envie de novo."); } }, 60000);
+  }
+  function pushMsg(conv, m) { conv.msgs.push(m); conv.at = Date.now(); saveChats(); }
+  function startStream() {
+    if (streaming) return streaming;
+    const el = document.createElement("div");
+    el.className = "m-ai";
+    el.innerHTML = `<div class="m-avatar" aria-hidden="true">C</div><div class="m-body"><div class="md typing"><span class="dots"><i></i><i></i><i></i></span></div></div>`;
+    $("chatLog").append(el); scrollFeed();
+    streaming = { el, text: "" };
+    return streaming;
+  }
+  function finishStream(finalText) {
+    const conv = S.chats.find((c) => c.id === chatConvId) || current();
+    const text = (finalText ?? streaming?.text ?? "").trim();
+    streaming?.el.remove(); streaming = null;
+    if (text && conv) pushMsg(conv, { r: "a", t: text });
+    if (conv && conv.id === chatId) renderChat();
+  }
+  function chatTools(convId) {
+    const conv = () => S.chats.find((c) => c.id === convId);
+    return {
+      save_word: ({ word, translation }) => {
+        const ok = addWord(word, translation, true);
+        if (ok && conv()) { pushMsg(conv(), { r: "saved", t: word }); if (convId === chatId) renderChat(); }
+        return ok ? "saved" : "already saved";
+      },
+      show_correction: ({ original, corrected, explanation }) => {
+        if (conv()) { pushMsg(conv(), { r: "fix", o: original, c: corrected, e: explanation }); if (convId === chatId) renderChat(); }
+        return "shown";
+      },
+    };
+  }
+  async function ensureChat(conv) {
+    if (chat && chatConvId === conv.id) return chatApi;
+    if (chatStarting) return chatStarting;
+    closeSession();
+    const mode = MODES[conv.mode] || MODES.tutor;
+    const history = conv.msgs.filter((m) => m.r === "u" || m.r === "a").slice(0, -1);
+    let sent = false; // ignore the agent's greeting: only text after our first message is a reply
+    chatStarting = (async () => {
+      const session = await EL.Conversation.startSession({
         ...(await sessionAuth(true)),
         textOnly: true,
-        dynamicVariables: { mode: "questions", level: S.level, scenario: "answering questions about English", first_message: "Pode mandar sua dúvida.", known_words: knownWords() },
-        clientTools: clientTools(feed),
+        dynamicVariables: { mode: "chat", level: S.level, scenario: mode.name, instructions: mode.prompt, first_message: GREETING, known_words: knownWords() },
+        clientTools: chatTools(conv.id),
+        onAgentChatResponsePart: ({ text, type }) => {
+          if (!sent || !busy) return;
+          const st = startStream();
+          if (type === "delta" && text) {
+            st.text += text;
+            const box = st.el.querySelector(".md");
+            box.classList.remove("typing");
+            box.innerHTML = md(st.text).replace(/<\/(p|li|h3)>(<\/[uo]l>)?$/, '<span class="caret"></span></$1>$2');
+            scrollFeed();
+          }
+        },
         onMessage: ({ message, source }) => {
-          if (source !== "ai" || !message) return;
-          if (askWaiting) { askWaiting.remove(); askWaiting = null; }
-          feed.insertAdjacentHTML("beforeend", `<div class="bubble ai">${md(message)}</div>`);
-          scrollFeed(feed);
-          markDone("ask");
+          if (source !== "ai" || !message || !sent || !busy) return;
+          finishStream(message); setBusy(false); markDone("ask");
         },
         onError: (msg) => toast("Erro: " + msg),
-        onDisconnect: () => { ask = null; },
+        onDisconnect: () => {
+          if (chatConvId === conv.id) { chat = null; chatConvId = null; }
+          if (busy) { finishStream(null); setBusy(false); }
+        },
       });
-      ask = conv; return conv;
+      chat = session; chatConvId = conv.id;
+      if (history.length) {
+        const transcript = history.slice(-20).map((m) => (m.r === "u" ? "Learner: " : "Coach: ") + m.t).join("\n").slice(-6000);
+        session.sendContextualUpdate("Earlier messages in this conversation, for context. Continue from here:\n" + transcript);
+      }
+      await new Promise((r) => setTimeout(r, 400)); // let the greeting arrive and be dropped
+      return { send: (t) => { sent = true; session.sendUserMessage(t); } };
     })();
-    try { return await askStarting; } finally { askStarting = null; }
+    try { chatApi = await chatStarting; return chatApi; } finally { chatStarting = null; }
   }
-  function endAskSession() { if (ask) { ask.endSession().catch(() => {}); ask = null; } }
-  async function sendAsk() {
-    const text = $("askInput").value.trim(); if (!text) return;
+
+  async function sendChat() {
+    const text = $("chatInput").value.trim();
+    if (!text || busy) return;
     if (!S.settings.agentId) { showTab("settings"); toast("Configure o ID do agente primeiro."); return; }
-    const feed = $("askFeed");
-    $("askInput").value = "";
-    feed.insertAdjacentHTML("beforeend", `<div class="bubble me">${esc(text)}</div>`);
-    askWaiting?.remove();
-    feed.insertAdjacentHTML("beforeend", `<div class="bubble ai thinking">pensando…</div>`);
-    askWaiting = feed.lastElementChild;
-    scrollFeed(feed);
+    if (!EL?.Conversation) { toast("Não consegui carregar o ElevenLabs. Verifique a internet."); return; }
+    let conv = current();
+    if (!conv) {
+      conv = { id: "c" + Date.now().toString(36), title: text.slice(0, 48), mode: draftMode, msgs: [], at: Date.now() };
+      S.chats.unshift(conv); chatId = conv.id;
+    }
+    $("chatInput").value = ""; autosize();
+    pushMsg(conv, { r: "u", t: text });
+    setBusy(true); renderChat(); startStream();
     try {
-      const conv = await ensureAsk();
-      conv.sendUserMessage(text);
+      (await ensureChat(conv)).send(text);
     } catch (e) {
-      askWaiting?.remove(); askWaiting = null;
-      toast(errText(e)); $("askInput").value = text;
+      streaming?.el.remove(); streaming = null; setBusy(false);
+      conv.msgs.pop(); saveChats(); renderChat();
+      $("chatInput").value = text; autosize();
+      toast(errText(e));
     }
   }
-  $("askForm").addEventListener("submit", (e) => { e.preventDefault(); sendAsk(); });
-  $("askInput").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendAsk(); } });
+  $("chatForm").addEventListener("submit", (e) => { e.preventDefault(); sendChat(); });
+  $("chatInput").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey && !e.isComposing && window.matchMedia("(hover: hover)").matches) { e.preventDefault(); sendChat(); } });
+  function autosize() { const t = $("chatInput"); t.style.height = "auto"; t.style.height = Math.min(t.scrollHeight, 160) + "px"; }
+  $("chatInput").addEventListener("input", autosize);
+
+  // ----- mic: speak your message (Scribe detects Portuguese or English) -----
+  let chatRec = null;
+  $("chatMic").addEventListener("click", async () => {
+    if (chatRec && chatRec.state === "recording") { chatRec.stop(); return; }
+    if (!hasKey()) { showTab("settings"); toast("O microfone do chat usa sua chave do ElevenLabs."); return; }
+    try {
+      chatRec = await startRecording(async (blob) => {
+        chatRec = null; $("chatMic").classList.remove("on");
+        if (blob.size < 2000) { toast("Gravação muito curta."); return; }
+        $("chatInput").placeholder = "transcrevendo…";
+        try {
+          const j = await scribe(blob);
+          const t = (j.text || "").trim();
+          if (t) { $("chatInput").value = ($("chatInput").value + " " + t).trim(); autosize(); $("chatInput").focus(); }
+        } catch (e) { toast(errText(e)); }
+        finally { $("chatInput").placeholder = "Escreva ou fale sua mensagem…"; }
+      });
+      $("chatMic").classList.add("on");
+    } catch (e) { toast(errText(e)); }
+  });
 
   // ---------------- PRONUNCIATION ----------------
   const tier = () => (S.level <= "A2" ? "A" : S.level <= "B2" ? "B" : "C");
@@ -344,26 +556,43 @@
   $("pronSlow").addEventListener("click", () => speak(pronItem?.en, 0.8));
   $("pronNext").addEventListener("click", nextPron);
 
-  let rec = null, recChunks = [];
+  // Shared recorder + Scribe transcription (used by Pronunciation and Chat).
   const recMime = () => ["audio/mp4", "audio/webm;codecs=opus", "audio/webm"].find((m) => window.MediaRecorder?.isTypeSupported?.(m)) || "";
+  async function startRecording(onBlob) {
+    if (!window.MediaRecorder) throw new Error("Este aparelho não grava áudio no navegador.");
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const mime = recMime();
+    const r = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+    const chunks = [];
+    r.ondataavailable = (e) => e.data.size && chunks.push(e.data);
+    r.onstop = () => { stream.getTracks().forEach((t) => t.stop()); onBlob(new Blob(chunks, { type: r.mimeType || mime || "audio/mp4" })); };
+    r.start();
+    return r;
+  }
+  async function scribe(blob, language) {
+    const ext = blob.type.includes("webm") ? "webm" : "m4a";
+    const send = async (model) => {
+      const fd = new FormData();
+      fd.append("file", blob, "speech." + ext);
+      fd.append("model_id", model);
+      if (language) fd.append("language_code", language);
+      fd.append("tag_audio_events", "false");
+      return (await el("/v1/speech-to-text", { method: "POST", body: fd })).json();
+    };
+    try { return await send("scribe_v2"); }
+    catch (e) { if (e.status === 400 || e.status === 422) return send("scribe_v1"); throw e; }
+  }
+
+  let rec = null;
   $("pronRec").addEventListener("click", async () => {
     if (rec && rec.state === "recording") { rec.stop(); return; }
     if (!hasKey()) { showTab("settings"); toast("A avaliação de pronúncia usa sua chave do ElevenLabs."); return; }
-    if (!window.MediaRecorder) { toast("Este aparelho não grava áudio no navegador."); return; }
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mime = recMime();
-      rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
-      recChunks = [];
-      rec.ondataavailable = (e) => e.data.size && recChunks.push(e.data);
-      rec.onstop = () => {
-        stream.getTracks().forEach((t) => t.stop());
-        $("pronRec").classList.remove("on"); $("pronRec").textContent = "Gravar minha voz";
-        const blob = new Blob(recChunks, { type: rec.mimeType || mime || "audio/mp4" });
+      rec = await startRecording((blob) => {
         rec = null;
+        $("pronRec").classList.remove("on"); $("pronRec").textContent = "Gravar minha voz";
         transcribe(blob);
-      };
-      rec.start();
+      });
       $("pronRec").classList.add("on"); $("pronRec").textContent = "Gravando… toque para parar";
     } catch (e) { toast(errText(e)); }
   });
@@ -372,20 +601,8 @@
     if (blob.size < 2000) { toast("Gravação muito curta. Fale a frase inteira."); return; }
     $("pronResult").hidden = false;
     $("pronHeard").textContent = "analisando…"; $("pronScore").textContent = ""; $("pronDiff").textContent = "";
-    const ext = blob.type.includes("webm") ? "webm" : "m4a";
-    const send = async (model) => {
-      const fd = new FormData();
-      fd.append("file", blob, "speech." + ext);
-      fd.append("model_id", model);
-      fd.append("language_code", "en");
-      fd.append("tag_audio_events", "false");
-      return (await el("/v1/speech-to-text", { method: "POST", body: fd })).json();
-    };
-    try {
-      let j;
-      try { j = await send("scribe_v2"); } catch (e) { if (e.status === 400 || e.status === 422) j = await send("scribe_v1"); else throw e; }
-      scorePron(j);
-    } catch (e) { $("pronHeard").textContent = errText(e); }
+    try { scorePron(await scribe(blob, "en")); }
+    catch (e) { $("pronHeard").textContent = errText(e); }
   }
 
   const norm = (s) => String(s).toLowerCase().replace(/[’']/g, "'").replace(/[^a-z0-9' -]+/g, " ").replace(/-/g, " ").split(/\s+/).filter(Boolean);
@@ -547,7 +764,7 @@
   });
 
   // ---------------- boot ----------------
-  function renderAll() { renderVocab(); renderFlash(); renderPlan(); }
+  function renderAll() { renderVocab(); renderFlash(); renderPlan(); renderChat(); }
   renderScenes(); renderPronTopics(); nextPron(); fillSettings(); refreshSetupBanner(); renderAll();
   showTab(location.hash.slice(1) || "talk");
   if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});
