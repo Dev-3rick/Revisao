@@ -1,6 +1,19 @@
 # Configurar o ElevenLabs para o Speak Lab
 
-Tempo: cerca de 15 minutos, uma vez só. No fim você terá dois valores para colar em **Ajustes** no app: o **ID do agente** e a **chave de API**.
+## Jeito rápido (recomendado, cerca de 1 minuto)
+
+1. Em **elevenlabs.io → Settings → API Keys → Create API key**, crie uma chave. Se ativar **Restrict key**, libere: Text to Speech, Speech to Text, Voices (leitura) e **ElevenLabs Agents (escrita)**. Defina um limite mensal de créditos.
+2. No app, abra **Ajustes**, cole a chave e toque em **Configurar meu professor automaticamente**.
+
+O app procura um agente chamado "Speak Lab Coach" na sua conta e, se não existir, cria ele com o prompt, as variáveis, as duas funções (`save_word` e `show_correction`), a autenticação ligada, o modo texto liberado e o limite de 15 minutos por conversa. A chave fica só no seu iPhone. A definição do agente está em `app/agent-config.js`.
+
+Se algo der errado na criação automática, use o passo a passo manual abaixo.
+
+---
+
+## Jeito manual (cerca de 15 minutos)
+
+No fim você terá dois valores para colar em **Ajustes → Já tenho um agente**: o **ID do agente** e a **chave de API**.
 
 ## Como o app usa o ElevenLabs
 

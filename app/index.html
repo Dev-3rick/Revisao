@@ -34,7 +34,7 @@
 
 <main>
   <div id="setupBanner" class="notice" hidden>
-    Falta configurar o ElevenLabs. <button class="link" data-go="settings">Abrir Ajustes</button>
+    Falta conectar seu ElevenLabs (1 minuto). <button class="link" data-go="settings">Conectar agora</button>
   </div>
 
   <!-- HOME -->
@@ -182,21 +182,27 @@
   <!-- SETTINGS -->
   <section class="view" id="view-settings" hidden>
     <form class="card" id="setForm">
-      <span class="label">ElevenLabs</span>
-      <label>ID do agente
-        <input id="sAgent" placeholder="agent_..." autocapitalize="off" autocomplete="off" spellcheck="false">
-      </label>
+      <span class="label">Conectar ao ElevenLabs</span>
+      <ol class="small steps">
+        <li>No site do ElevenLabs, abra <b>Settings → API Keys → Create API key</b> e copie a chave.</li>
+        <li>Cole abaixo e toque em <b>Configurar meu professor automaticamente</b>.</li>
+      </ol>
       <label>Chave de API (fica só neste aparelho)
         <input id="sKey" type="password" placeholder="sk_..." autocapitalize="off" autocomplete="off" spellcheck="false">
       </label>
-      <label>Voz para pronúncia e vocabulário
-        <select id="sVoice"><option value="">Carregue suas vozes</option></select>
+      <label>Voz para pronúncia e vocabulário (opcional)
+        <select id="sVoice"><option value="">Voz padrão</option></select>
       </label>
-      <div class="row">
-        <button class="btn" type="button" id="sLoadVoices">Carregar minhas vozes</button>
-        <button class="btn primary" type="submit">Salvar</button>
-      </div>
-      <p class="small muted" id="sStatus"></p>
+      <button class="btn" type="button" id="sLoadVoices">Carregar minhas vozes</button>
+      <button class="btn primary big" type="button" id="sAuto">Configurar meu professor automaticamente</button>
+      <p class="small muted" id="sStatus" aria-live="polite"></p>
+      <details class="small">
+        <summary>Já tenho um agente (avançado)</summary>
+        <label>ID do agente
+          <input id="sAgent" placeholder="agent_..." autocapitalize="off" autocomplete="off" spellcheck="false">
+        </label>
+        <button class="btn" type="submit">Salvar ID</button>
+      </details>
     </form>
     <div class="card">
       <span class="label">Como instalar no iPhone</span>
@@ -233,6 +239,7 @@
 
 <script src="vendor/elevenlabs-client-1.35.0.js"></script>
 <script src="sentences.js"></script>
+<script src="agent-config.js"></script>
 <script src="app.js"></script>
 <script src="assess-bank.js"></script>
 <script src="assess.js"></script>

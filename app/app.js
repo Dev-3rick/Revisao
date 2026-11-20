@@ -77,7 +77,7 @@
   $("level").value = S.level;
   $("level").addEventListener("change", () => { S.level = $("level").value; save("level"); renderPronTopics(); nextPron(); });
 
-  function refreshSetupBanner() { $("setupBanner").hidden = Boolean(S.settings.agentId); }
+  function refreshSetupBanner() { $("setupBanner").hidden = Boolean(S.settings.agentId && S.settings.apiKey); }
 
   // ---------------- iOS audio unlock ----------------
   // iOS only lets audio play after a tap. We prime one shared <audio> and an AudioContext on the first tap.
@@ -111,7 +111,7 @@
   async function el(path, opts = {}) {
     const res = await fetch(API + path, { ...opts, headers: { "xi-api-key": S.settings.apiKey, ...(opts.headers || {}) } });
     if (!res.ok) {
-      let detail = ""; try { const j = await res.json(); detail = j?.detail?.message || j?.detail?.status || (typeof j?.detail === "string" ? j.detail : ""); } catch {}
+      let detail = ""; try { const j = await res.json(); const d = j?.detail; detail = Array.isArray(d) ? d.map((x) => `${(x.loc || []).slice(-2).join(".")}: ${x.msg}`).join("; ") : d?.message || d?.status || (typeof d === "string" ? d : ""); } catch {}
       const err = new Error(detail || "HTTP " + res.status); err.status = res.status; throw err;
     }
     return res;
@@ -808,6 +808,62 @@
     $("sStatus").textContent = "Salvo neste aparelho.";
     toast("Ajustes salvos");
   });
+  // One-tap setup: find the "Speak Lab Coach" agent on the user's account, or create it with its tools.
+  async function setupAgent() {
+    const C = window.AGENT_CONFIG;
+    const say = (t) => ($("sStatus").textContent = t);
+    S.settings.apiKey = $("sKey").value.trim();
+    if (!hasKey()) { toast("Cole sua chave de API primeiro."); return; }
+    $("sAuto").disabled = true;
+    try {
+      say("Procurando seu professor no ElevenLabs…");
+      const list = await (await el(`/v1/convai/agents?search=${encodeURIComponent(C.name)}&page_size=20`)).json();
+      let agent = (list.agents || []).find((a) => a.name === C.name);
+      if (!agent) {
+        say("Criando as funções do app…");
+        const toolIds = [];
+        for (const t of C.tools) {
+          const r = await (await el("/v1/convai/tools", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tool_config: t }) })).json();
+          toolIds.push(r.id);
+        }
+        say("Criando o professor…");
+        const tts = { model_id: "eleven_flash_v2_5", ...($("sVoice").value ? { voice_id: $("sVoice").value } : {}) };
+        const full = {
+          name: C.name, tags: ["speak-lab"],
+          conversation_config: {
+            agent: { first_message: C.firstMessage, language: "en", dynamic_variables: { dynamic_variable_placeholders: C.placeholders }, prompt: { prompt: C.prompt, llm: C.llm, temperature: 0.5, tool_ids: toolIds } },
+            tts, conversation: { max_duration_seconds: 900 },
+          },
+          platform_settings: { auth: { enable_auth: true }, overrides: { conversation_config_override: { conversation: { text_only: true } } } },
+        };
+        // If the API rejects an optional part, retry without it (most specific first).
+        const variants = [
+          full,
+          { ...full, conversation_config: { ...full.conversation_config, agent: { ...full.conversation_config.agent, dynamic_variables: C.placeholders } } },
+          { ...full, conversation_config: { ...full.conversation_config, agent: { first_message: C.firstMessage, language: "en", prompt: { prompt: C.prompt, tool_ids: toolIds } } } },
+        ];
+        let lastErr = null;
+        for (const body of variants) {
+          try { agent = await (await el("/v1/convai/agents/create", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })).json(); break; }
+          catch (e) { lastErr = e; if (e.status !== 400 && e.status !== 422) throw e; }
+        }
+        if (!agent?.agent_id) throw lastErr || new Error("Não consegui criar o agente.");
+      }
+      S.settings.agentId = agent.agent_id;
+      $("sAgent").value = agent.agent_id;
+      const opt = $("sVoice").selectedOptions[0];
+      if (opt?.value) { S.settings.voiceId = opt.value; S.settings.voiceName = opt.textContent; }
+      save("settings"); refreshSetupBanner();
+      say("Pronto! Seu professor está configurado. Vá em Início e faça o teste de nível.");
+      toast("Professor configurado");
+    } catch (e) {
+      say(e.status === 401 || e.status === 403
+        ? "A chave não tem permissão para criar agentes. No ElevenLabs, edite a chave e libere \"ElevenLabs Agents\" com acesso de escrita."
+        : errText(e));
+    } finally { $("sAuto").disabled = false; }
+  }
+  $("sAuto").addEventListener("click", setupAgent);
+
   $("sLoadVoices").addEventListener("click", async () => {
     S.settings.apiKey = $("sKey").value.trim();
     if (!hasKey()) { toast("Cole sua chave de API primeiro."); return; }
